@@ -12,7 +12,7 @@ Pada langkah ini kita akan membuat error page untuk halaman `/dashboard/jokes` (
 
    ```tsx
    type Joke = {
-     id: number;
+     id: string;
      setup: string;
      delivery: string;
    };
@@ -22,6 +22,9 @@ Pada langkah ini kita akan membuat error page untuk halaman `/dashboard/jokes` (
      // Membuat error terjadi secara "accidental"
      const response = await fetch("http://localhost:3001/joke");
      const responseJson: Joke[] = await response.json();
+
+     // Simulasi untuk api yang lambat
+     await new Promise((resolve) => setTimeout(resolve, 2000));
 
      // ?? Step 11 - Membuat halaman error untuk /dashboard/jokes (4)
      // Lempar error ketika terjadi masalah

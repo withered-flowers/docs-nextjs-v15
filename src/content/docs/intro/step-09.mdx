@@ -27,7 +27,7 @@ Bagaimanakah caranya dengan NextJS `app router` ini?
    // ?? Step 9 - Mempopulasikan data pada /dashboard/jokes (0)
    // Membuat definition type untuk data yang akan di-parse
    type Joke = {
-     id: number;
+     id: string;
      setup: string;
      delivery: string;
    };
@@ -37,6 +37,9 @@ Bagaimanakah caranya dengan NextJS `app router` ini?
    const fetchJokes = async () => {
      const response = await fetch("http://localhost:3001/jokes");
      const responseJson: Joke[] = await response.json();
+
+     // Simulasi untuk api yang lambat
+     await new Promise((resolve) => setTimeout(resolve, 2000));
 
      // Kembalian dari fungsi ini adalah data yang sudah di-parse
      return responseJson;
