@@ -1,0 +1,26 @@
+---
+title: Membuat Routing /about
+---
+
+### Bikin Routing Caranya Gimana?
+
+Pada langkah ini mari kita mencoba untuk membuat sebuah routing baru dengan nama `/about` (`http://localhost:3000/about`)
+
+1. Membuat sebuah folder baru pada `src/app` dengan nama `about` (`src/app/about`)
+1. Membuat sebuah file baru pada folder tersebut dengan nama `page.tsx` (`src/app/about/page.tsx`)
+1. Membuat component baru yang berisikan kode seperti di bawah ini:
+
+   ```tsx
+   // Nama dari "Component" untuk page.tsx tidak perlu sama.
+   const AboutPage = () => {
+     return (
+       <section className="w-full min-h-screen flex flex-col items-center justify-center">
+         <h1 className="text-3xl font-semibold">About Page</h1>
+       </section>
+     );
+   };
+
+   export default AboutPage;
+   ```
+
+1. Buka kembali browser dan ketikkan `http://localhost:3000/about` dan voila, kita sudah berhasil membuat sebuah routing baru ! Cukup mudah bukan?

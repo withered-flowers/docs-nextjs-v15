@@ -1,0 +1,95 @@
+---
+title: Membuat halaman error untuk /dashboard/jokes
+---
+
+### Bikin error page yuk !
+
+Pada langkah ini kita akan membuat error page untuk halaman `/dashboard/jokes` (`http://localhost:3000/dashboard/jokes`) dengan menggunakan built in error page yang disediakan oleh NextJS.
+
+1. Memodifikasi file `src/app/dashboard/jokes/page.tsx` untuk membuat koneksi error dan handling error (throw Error), dengan kode sebagai berikut:
+
+   Perhatikan `Step 11`
+
+   ```tsx
+   type Joke = {
+     id: number;
+     setup: string;
+     delivery: string;
+   };
+
+   const fetchJokes = async () => {
+     // ?? Step 11 - Membuat halaman error untuk /dashboard/jokes (3)
+     // Membuat error terjadi secara "accidental"
+     const response = await fetch("http://localhost:3001/joke");
+     const responseJson: Joke[] = await response.json();
+
+     // ?? Step 11 - Membuat halaman error untuk /dashboard/jokes (4)
+     // Lempar error ketika terjadi masalah
+     if (!response.ok) {
+       throw new Error("Waduh Error ...");
+     }
+
+     // Kembalian dari fungsi ini adalah data yang sudah di-parse
+     return responseJson;
+   };
+
+   const DashboardJokePage = async () => {
+     const jokes = await fetchJokes();
+
+     return (
+       <section>
+         <h2 className="text-2xl font-semibold">Dashboard Page - Jokes</h2>
+         <table className="mt-4">
+           <thead>
+             <tr>
+               <th className="p-4">No</th>
+               <th className="p-4">Setup</th>
+               <th className="p-4">Delivery</th>
+             </tr>
+           </thead>
+           <tbody>
+             {jokes.map((todo, idx) => (
+               <tr key={todo.id}>
+                 <td>{idx + 1}</td>
+                 <td>{todo.setup}</td>
+                 <td>{todo.delivery}</td>
+               </tr>
+             ))}
+           </tbody>
+         </table>
+       </section>
+     );
+   };
+
+   export default DashboardJokePage;
+   ```
+
+1. Membuat sebuah file baru pada folder `/src/app/dashboard/jokes` dengan nama `error.tsx` (`/src/app/dashboard/jokes/error.tsx`) dan menambahkan kode sebagai berikut:
+
+   ```tsx
+   // ?? Step 11 - Membuat halaman error untuk /dashboard/jokes (1)
+   // Deklarasi error sebagai Client Component
+   "use client";
+
+   // ?? Step 11 - Membuat halaman error untuk /dashboard/jokes (2)
+   // Membuat component seperti biasa
+   const DashboardErrorPage = () => {
+     return (
+       <section>
+         <p className="text-red-400 animate-pulse">Something wicked happened</p>
+       </section>
+     );
+   };
+
+   export default DashboardErrorPage;
+   ```
+
+1. Buka browser dan ketikkan `http://localhost:3000/dashboard/jokes`, maka akan muncul error page yang sudah dibuat sebelumnya.
+
+:::tip
+_**`Memang boleh semudah ini (lagi)?`**_
+
+Ya, karena pada `app router` ini, kita bisa membuat sebuah error component yang bersifat `Client Component` dan menggunakan sesuatu dari React yang bernama `Error Boundary`.
+
+Untuk membaca lebih lanjut mengenai error handling pada NextJS, bisa dengan membuka [tautan ini](https://nextjs.org/docs/app/building-your-application/routing/error-handling) yah
+:::

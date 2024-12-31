@@ -1,0 +1,83 @@
+---
+title: Membuat Dynamic Router /dashboard/jokes/[id]
+---
+
+### Dynamic Router? Bisa dong !
+
+Pada langkah ini kita akan membuat sebuah dynamic router dengan nama `/dashboard/jokes/[id]` (`http://localhost:3000/dashboard/jokes/1`) yang akan menerima data dari backend yang sudah dimiliki dengan json-server (`http://localhost:3001/jokes/1`)
+
+1. Membuat sebuah folder baru pada `src/app/dashboard/jokes` dengan nama `[id]` (`src/app/dashboard/jokes/[id]`), perhatikan bahwa ada kurung siku `[` dan `]` pada nama folder tersebut.
+
+   Folder ini akan menyatakan ada suatu "kedinamisan" (`params`) yang akan diproses oleh NextJS
+
+1. Membuat sebuah file baru pada `src/app/dashboard/jokes/[id]` dengan nama `page.tsx` (`src/app/dashboard/jokes/[id]/page.tsx`) dan menambahkan kode sebagai berikut:
+
+   ```tsx
+   // ?? Step 13 - Membuat Dynamic Router `/dashboard/jokes/[id]` (1)
+   // Membuat Type dari Joke yang akan diambil dari API
+   type Joke = {
+     id: string;
+     setup: string;
+     delivery: string;
+   };
+
+   // ?? Step 13 - Membuat Dynamic Router `/dashboard/jokes/[id]` (2)
+   // Membuat sebuah fungsi yang bersifat async untuk mengambil data dari API
+   const fetchJokeById = async (id: string) => {
+     const response = await fetch(`http://localhost:3001/jokes/${id}`);
+     const data: Joke = await response.json();
+
+     if (!response.ok) {
+       throw new Error(`FAILED_FETCH_JOKE_${id}`);
+     }
+
+     return data;
+   };
+
+   // ?? Step 13 - Membuat Dynamic Router `/dashboard/jokes/[id]` (3)
+   // Di sinilah kita akan menggunakan params yang kita dapatkan dari dynamic router
+
+   // Perhatikan di sini kita menerima sebuah params yang berisi suatu object
+   // dengan key `id` yang mana `id` ini kita dapatkan dari dynamic router
+
+   // Perhatikan juga karena ini merupakan component yang akan menunggu data
+   // fungsi fetchJokeById, maka harus dinyatakan sebagai "async" component.
+   const DashboardJokesByIdPage = async ({
+     params,
+   }: {
+     params: { id: string };
+   }) => {
+     // ?? Step 13 - Membuat Dynamic Router `/dashboard/jokes/[id]` (4)
+     // Memanggil fungsi fetchJokeById dengan id yang kita dapatkan dari params
+     const joke = await fetchJokeById(params.id);
+
+     return (
+       <section>
+         <h2 className="text-2xl font-semibold">
+           Dashboard Page - Joke ({params.id})
+         </h2>
+         {/* ?? Step 13 - Membuat Dynamic Router `/dashboard/jokes/[id]` (5) */}
+         {/* Menampilkan hasil dalam bentuk pre */}
+         <pre>{JSON.stringify(joke, null, 2)}</pre>
+       </section>
+     );
+   };
+
+   export default DashboardJokesByIdPage;
+   ```
+
+1. Buka browser dan ketikkan `http://localhost:3000/dashboard/jokes/1`, maka akan muncul hasil dari data yang sudah di-fetch dari backend.
+
+   :::tip
+   _**`Memang boleh semudah ini (lagi, lagi, dan lagi)?`**_
+
+   Ya, karena pada `app router` ini, kita bisa membuat sebuah dynamic router dengan menambahkan kurung siku `[` dan `]` pada nama folder yang akan kita gunakan.
+
+   Untuk membaca lebih lanjut mengenai dynamic routing pada NextJS, bisa dengan membuka [tautan ini](https://nextjs.org/docs/routing/dynamic-routes) yah
+   :::
+
+1. Perhatikan juga bahwa dalam kode ini, secara otomatis akan menggunakan loading yang dibuat pada `src/app/dashboard/jokes` dan juga akan menggunakan error yang dibuat pada `src/app/dasboard/jokes`.
+
+   Hal ini dikarenakan pada NextJS, routing akan mencari sebuah file dengan nama `loading.tsx` dan `error.tsx` dari routing folder sendiri hingga routing folder teratasnya (`/app`) secara otomatis !
+
+Sampai di sini materi kita sudah selesai, asik yah ternyata bermain dengan NextJS? Hanya saja, kode kita menjadi lebih teropini loh yah.

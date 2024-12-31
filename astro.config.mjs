@@ -6,81 +6,98 @@ import { defineConfig } from "astro/config";
 export default defineConfig({
 	integrations: [
 		starlight({
-			title: "Tutorial NextJS v15",
+			title: "Pembelajaran NextJS v15",
 			social: {
-				github: "https://github.com/withastro/starlight",
+				github: "https://github.com/withered-flowers/docs-nextjs-v15",
 			},
 			sidebar: [
 				{
 					label: "Introduction",
-					// link: "https://www.google.com",
 					items: [
 						{
+							label: "Step 0 - Kenalan dengan NextJS",
+							slug: "intro/step-00",
+						},
+						{
 							label: "Step 1 - Inisialisasi Proyek",
-							link: "https://www.google.com",
-							//  slug: "guides/example"
+							slug: "intro/step-01",
 						},
 						{
 							label: "Step 2 - Analisa File / Folder",
-							link: "https://www.google.com",
+							slug: "intro/step-02",
 						},
 						{
 							label: "Step 3 - Jalankan Proyek",
-							link: "https://www.google.com",
+							slug: "intro/step-03",
 						},
 						{
 							label: "Step 4 - Membuat Routing /about",
-							link: "https://www.google.com",
+							slug: "intro/step-04",
 						},
 						{
 							label: "Step 5 - Menambahkan anchor pada /about",
-							link: "https://www.google.com",
+							slug: "intro/step-05",
 						},
 						{
 							label: "Step 6 - Membuat Routing /dashboard",
-							link: "https://www.google.com",
+							slug: "intro/step-06",
 						},
 						{
 							label: "Step 7 - Membuat Component DashboardSidebar",
-							link: "https://www.google.com",
+							slug: "intro/step-07",
 						},
 						{
 							label: "Step 8 - Membuat Routing /dashboard/jokes",
-							link: "https://www.google.com",
+							slug: "intro/step-08",
 						},
 						{
 							label: "Step 9 - Mempopulasikan data pada /dashboard/jokes",
-							link: "https://www.google.com",
+							slug: "intro/step-09",
 						},
 						{
 							label: "Step 10 - Membuat halaman loading untuk /dashboard/jokes",
-							link: "https://www.google.com",
+							slug: "intro/step-10",
 						},
 						{
 							label: "Step 11 - Membuat halaman error untuk /dashboard/jokes",
-							link: "https://www.google.com",
+							slug: "intro/step-11",
 						},
 						{
 							label: "Step 12 - Menampilkan error yang di-throw dari server",
-							link: "https://www.google.com",
+							slug: "intro/step-12",
 						},
 						{
 							label: "Step 13 - Membuat Dynamic Router /dashboard/jokes/[id]",
-							link: "https://www.google.com",
+							slug: "intro/step-13",
 						},
 					],
 				},
 				{
 					label: "Client & Server Component",
-					link: "https://www.google.com",
+					items: [
+						{
+							label: "WIP",
+							slug: "client-server/step-01",
+						},
+					],
 				},
 				{
 					label: "Route Handler",
-					link: "https://www.google.com",
+					items: [
+						{
+							label: "WIP",
+							slug: "route-handler/step-01",
+						},
+					],
 				},
 				{
 					label: "Authentication & Middleware",
-					link: "https://www.google.com",
+					items: [
+						{
+							label: "WIP",
+							slug: "auth-middleware/step-01",
+						},
+					],
 				},
 			],
 		}),

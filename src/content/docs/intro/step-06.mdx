@@ -1,0 +1,83 @@
+---
+title: Membuat Routing /dashboard
+---
+
+### Bikin routing lagi dah !
+
+Pada langkah ini kita akan membuat sebuah layout untuk Dashboard dan membuat sebuah routing baru dengan nama `/dashboard`.
+
+1. Membuat sebuah folder baru pada `src/app` dengan nama `dashboard` (`src/app/dashboard`)
+1. Membuat sebuah file baru pada folder tersebut dengan nama `layout.tsx` (`src/app/dashboard/layout.tsx`)
+1. Membuat sebuah file baru pada folder tersebut dengan nama `page.tsx` (`src/app/dashboard/page.tsx`)
+1. Memodifikasi file `src/app/dashboard/layout.tsx` menjadi seperti berikut:
+
+   ```tsx
+   // ?? Step 6 - Membuat Routing /dashboard (1)
+   // layout ini akan meng-extend layout default dari NextJS (pages/app.tsx)
+   // Digunakan untuk menampilkan sidebar dan content
+   import Link from "next/link";
+
+   const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
+     return (
+       // Whole Screen
+       <section className="w-full h-screen flex">
+         {/* Left Side */}
+         <aside className="w-64 h-full bg-gray-100 dark:bg-zinc-800/30 p-4">
+           <h2 className="text-2xl font-semibold mb-4">Navigation</h2>
+           {/* Sidebar */}
+           <ul>
+             <li>
+               <Link
+                 className="underline text-blue-400 hover:text-blue-600 underline-offset-4 transition-colors duration-300"
+                 href="/"
+               >
+                 Home
+               </Link>
+             </li>
+             <li>
+               <Link
+                 className="underline text-blue-400 hover:text-blue-600 underline-offset-4 transition-colors duration-300"
+                 href="/about"
+               >
+                 About
+               </Link>
+             </li>
+             <li>
+               <Link
+                 className="underline text-blue-400 hover:text-blue-600 underline-offset-4 transition-colors duration-300"
+                 href="/dashboard"
+               >
+                 Dashboard
+               </Link>
+             </li>
+           </ul>
+         </aside>
+
+         {/* Right Side */}
+         <main className="w-full h-full bg-white dark:bg-zinc-900/30 p-4">
+           {/* Content */}
+           {children}
+         </main>
+       </section>
+     );
+   };
+
+   export default DashboardLayout;
+   ```
+
+1. Memodifikasi file `src/app/dashboard/page.tsx` menjadi seperti berikut:
+
+   ```tsx
+   // ??  Step 6 - Membuat Routing /dashboard (2)
+   const DashboardPage = () => {
+     return (
+       <section>
+         <h2 className="text-2xl font-semibold">Dashboard Page</h2>
+       </section>
+     );
+   };
+
+   export default DashboardPage;
+   ```
+
+1. Buka pada browser dan ketikkan `http://localhost:3000/dashboard`, selamat, kita sudah berhasil membuat sebuah routing baru dengan nama `/dashboard` !
