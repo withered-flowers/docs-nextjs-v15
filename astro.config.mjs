@@ -73,16 +73,53 @@ export default defineConfig({
 					],
 				},
 				{
-					label: "Client & Server Component",
+					label: "Client & Server Component (WIP)",
 					items: [
 						{
-							label: "WIP",
+							label: "Step 0 - Inisialisasi Proyek",
+							slug: "client-server/step-00",
+						},
+						{
+							label: "Step 1 - Menambahkan tombol Detail pada /dashboard/jokes",
 							slug: "client-server/step-01",
+						},
+						{
+							label: "Step 2 - Menambahkan tombol Delete pada /dashboard/jokes",
+							slug: "client-server/step-02",
+						},
+						{
+							label: "Step 3 - Membuat Client Component TableJokes",
+							slug: "client-server/step-03",
+						},
+						{
+							label:
+								"Step 4 - Implementasi Delete pada Client Component TableJokes",
+							slug: "client-server/step-04",
+						},
+						{
+							label: "Intermezzo - Data Cache",
+							slug: "client-server/step-04b",
+						},
+						{
+							label: "Step 5 - Opt-in dari Data Cache",
+							slug: "client-server/step-05",
+						},
+						{
+							label: "Step 6 - Membuat Form Add Joke (Client Component)",
+							slug: "client-server/step-06",
+						},
+						{
+							label: "Intermezzo - Server Actions",
+							slug: "client-server/step-06b",
+						},
+						{
+							label: "Step 7 - Membuat Form Add Joke (Server Component)",
+							slug: "client-server/step-07",
 						},
 					],
 				},
 				{
-					label: "Route Handler",
+					label: "Route Handler (WIP)",
 					items: [
 						{
 							label: "WIP",
@@ -91,7 +128,7 @@ export default defineConfig({
 					],
 				},
 				{
-					label: "Authentication & Middleware",
+					label: "Authentication & Middleware (WIP)",
 					items: [
 						{
 							label: "WIP",

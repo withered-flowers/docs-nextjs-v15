@@ -1,0 +1,93 @@
+---
+title: Intermezzo - Cache
+---
+
+:::danger
+Tidak perlu dilakukan yah, ini hanya cukup tahu saja.
+:::
+
+
+Bagi teman-teman yang sudah pernah menggunakan NextJS (v14 ke bawah), ada perubahan yang cukup signifikan pada `cache` yang digunakan oleh NextJS.
+
+Nah bagi teman-teman yang baru menggunakan NextJS dan belum mengetahui `cache` itu apa, sepertinya bagian ini bisa disimak saja yah.
+
+### Apa itu Cache?
+
+`Cache` adalah sebuah mekanisme penyimpanan data sementara yang digunakan untuk mempercepat akses data. Cache biasanya digunakan untuk menyimpan data yang sering diakses agar data tersebut bisa diakses lebih cepat.
+
+### Cache di NextJS
+
+Pada NextJS 15 ini, ada 2 jenis `cache` yang bisa digunakan, yaitu:
+
+1. Data Caching
+1. Component & Function Caching
+
+#### Data Caching
+
+Pada versi NextJS v14 ke bawah, NextJS menggunakan `cache` yang cukup agresif pada setiap halaman yang di-generate. Hal ini menyebabkan setiap perubahan data pada halaman akan memicu `cache` untuk divalidasi ulang.
+
+Hal ini terjadi karena NextJS 14 pada saat melakukan fetch (comot data), akan menggunakan strategi pencomotan data yang dinamakan `force-cache`, yang artinya NextJS akan selalu mengambil data dari cache.
+
+Nah hal ini berubah pada NextJS 15+, dimana NextJS menggunakan strategi yang bernama `no-store`, yang artinya NextJS tidak akan menyimpan data pada cache.
+
+:::note
+TL;DR
+
+- NextJS 14 ke bawah data cache adalah kewajiban (**opt-out** bila dibutuhkan)
+- NextJS 15 ke atas data cache adalah opsional (**opt-in** bila dibutuhkan)
+:::
+
+##### Cara Penggunaan Data Caching
+
+Berikut adalah contoh penggunaan data caching pada aplikasi NextJS:
+
+```tsx
+// Pada saat melakukan fetch data
+const fetchDataDariManapun = async () => {
+  const response = await fetch("http://backend.yang.dituju/sumber-daya", {
+    // ?? Di sini kita akan meminta NextJS untuk menyimpan data pada cache
+    cache: "force-cache",
+    // ?? Di sini kita akan meminta NextJS untuk melakukan "tag" / "flag" pada data yang di-fetch
+    next: {
+      tags: [
+        "tag-1"
+      ],
+    },
+  });
+  const responseJson = await response.json();
+
+  return responseJson;
+};
+
+// Pada saat ingin mem-busting / mem-validasi ulang cache
+
+// ?? Di sini kita akan melakukan import revalidateTag dari next/cache
+// ?? Fungsi ini akan digunakan untuk melakukan revalidasi cache
+// ?? Lihat pada atas tagnya bernama "tag-1"
+import { revalidateTag } from "next/cache";
+
+const fnYangMelakukanRevalidasiCache = async () => {
+  // Melakukan sesuatu bla bla bla....
+
+  // Akhirnya kita melakukan revalidasi cache
+  revaidateTag("tag-1");
+
+  // Melakukan sesuatu bla bla bla....
+}
+```
+
+#### Component & Function Caching
+
+:::caution
+Cara ini masih merupakan cara yang **eksperimental** dari developer NextJS sendiri, jadi kita belum menggunakannya dalam aplikasi yang akan dibuat di sini yah !
+
+TL;DR
+
+Cukup tahu saja apabila ada mekanisme caching ini, dan pakai apabila memang benar-benar dibutuhkan, **TAPI** harus hati-hati dengan perubahan yang mungkin terjadi ke depannya (karena ini masih **eksperimental**)
+:::
+
+Pada versi NextJS v15 ini, NextJS juga memberikan fitur caching pada komponen dan fungsi yang ada pada aplikasi NextJS.
+
+Hal ini berfungsi seperti `memo` pada React, dimana komponen atau fungsi yang sudah di-render akan disimpan pada cache dan tidak akan di-render ulang apabila tidak ada perubahan pada props atau state, hanya saja lebih difokuskan supaya tidak terjadi data re-fetching yang berlebihan.
+
+##### Cara Penggunaan Component & Function Caching

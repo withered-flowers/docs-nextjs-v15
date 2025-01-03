@@ -1,0 +1,111 @@
+---
+title: Bikin Tombol Delete yang Benar
+---
+
+### Implementasi tombol Delete
+
+Pada langkah ini kita akan mencoba untuk mengimplementasi Delete yang sebenarnya pada client component yah !
+
+:::tip
+Di sini kita akan menggunakan hooks yang sudah disediakan oleh NextJS yaitu `useRouter` untuk melakukan navigasi (refresh) halaman.
+
+Untuk membaca lebih lanjut tentang `useRouter`, silahkan baca di [dokumentasi resmi NextJS](https://nextjs.org/docs/app/api-reference/functions/use-router).
+:::
+
+1. Membuka kembali file `TableJokes` (`src/components/TableJokes.tsx`) dan memodifikasi filenya menjadi seperti berikut:
+
+   ```tsx
+   "use client";
+
+   import Link from "next/link";
+
+   // ?? Step 4 - Implementasi Delete pada Client Component `TableJokes` (3)
+   // Import hooks dengan nama useRouter untuk menavigasi (refresh) halaman nantinya
+   import { useRouter } from "next/navigation";
+
+   type Joke = {
+     id: string;
+     setup: string;
+     delivery: string;
+   };
+
+   const TableJokes = ({ jokes }: { jokes: Joke[] }) => {
+     // ?? Step 4 - Implementasi Delete pada Client Component `TableJokes` (4)
+     // Menggunakan useRouter
+     const navigation = useRouter();
+
+     // ?? Step 4 - Implementasi Delete pada Client Component `TableJokes` (2)
+     // Membuat fungsi ini menjadi async karena kita akan melakukan fetch ke backend
+     const buttonDeleteOnClickHandler = async (
+       _event: React.MouseEvent<HTMLButtonElement>,
+       id: string
+     ) => {
+       console.log("Delete Button Clicked for id:", id);
+
+       // ?? Step 4 - Implementasi Delete pada Client Component `TableJokes` (1)
+       // Menggunakan fetch untuk melakukan DELETE ke backend
+       const response = await fetch(`http://localhost:3001/jokes/${id}`, {
+         method: "DELETE",
+       });
+       const responseJson = await response.json();
+
+       console.log("statusCode:", response.status, "result:", responseJson);
+
+       // ?? Step 4 - Implementasi Delete pada Client Component `TableJokes` (5)
+       // Menggunakan useRouter untuk melakukan refresh halaman
+       navigation.refresh();
+     };
+
+     return (
+       <>
+         <table className="mt-4">
+           <thead>
+             <tr>
+               <th className="p-4">No</th>
+               <th className="p-4">Setup</th>
+               <th className="p-4">Delivery</th>
+               <th className="p-4">Action</th>
+             </tr>
+           </thead>
+           <tbody>
+             {jokes.map((joke, idx) => (
+               <tr key={joke.id}>
+                 <td>{idx + 1}</td>
+                 <td>{joke.setup}</td>
+                 <td>{joke.delivery}</td>
+                 <td className="p-2">
+                   <Link
+                     href={`/dashboard/jokes/${joke.id}`}
+                     className="py-2 px-4 bg-blue-200 hover:bg-blue-400 hover:text-white transition-colors duration-300 rounded"
+                   >
+                     Detail
+                   </Link>
+                 </td>
+                 <td className="p-2">
+                   <button
+                     type="button"
+                     onClick={(event) =>
+                       buttonDeleteOnClickHandler(event, joke.id)
+                     }
+                     className="py-2 px-4 bg-red-200 hover:bg-red-400 hover:text-white transition-colors duration-300 rounded"
+                   >
+                     Delete
+                   </button>
+                 </td>
+               </tr>
+             ))}
+           </tbody>
+         </table>
+       </>
+     );
+   };
+
+   export default TableJokes;
+   ```
+
+1. Membuka browser kembali pada halaman `dashboard/jokes` (`http://localhost:3000/dashboard/jokes`), kemudian jangan lupa untuk membuka `Inspect -> Console` untuk melihat hasil dari console log yang akan keluar.
+1. Menekan salah satu tombol delete pada yang memiliki id manapun dan lihat hasilnya.
+
+   Pada tahap ini, console akan menampilkan bahwa sebuah data sudah terhapus dan sudah mendapatkan kembalian dari backend berupa sudah object dengan value `{ statusCode: 200, result: {} }`.
+
+   Dan halaman ini juga sudah melakukan refresh dengan menggunakan suatu navigasi `navigation.refresh()`
