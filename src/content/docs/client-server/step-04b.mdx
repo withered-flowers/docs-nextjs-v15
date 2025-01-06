@@ -76,7 +76,7 @@ const fnYangMelakukanRevalidasiCache = async () => {
 }
 ```
 
-#### Component & Function Caching
+#### Component & Function Caching (Canary)
 
 :::caution
 Cara ini masih merupakan cara yang **eksperimental** dari developer NextJS sendiri, jadi kita belum menggunakannya dalam aplikasi yang akan dibuat di sini yah !
@@ -86,22 +86,10 @@ TL;DR
 Cukup tahu saja apabila ada mekanisme caching ini, dan pakai apabila memang benar-benar dibutuhkan, **TAPI** harus hati-hati dengan perubahan yang mungkin terjadi ke depannya (karena ini masih **eksperimental**)
 :::
 
-Pada versi NextJS v15 ini, NextJS juga memberikan fitur caching pada komponen dan fungsi yang ada pada aplikasi NextJS.
+Pada versi NextJS Canary, NextJS juga memberikan fitur caching pada komponen dan fungsi yang ada pada aplikasi NextJS.
 
 Hal ini berfungsi seperti `memo` pada React, dimana komponen atau fungsi yang sudah di-render akan disimpan pada cache dan tidak akan di-render ulang apabila tidak ada perubahan pada props atau state, hanya saja lebih difokuskan supaya tidak terjadi data re-fetching yang berlebihan.
 
 ##### Cara Penggunaan Component & Function Caching
 
-Berikut adalah contoh penggunaan component & function caching pada aplikasi NextJS:
-
-1. Aktifkan dynamicIO pada `next.config.ts`
-
-```ts
-// next.config.ts
-
-```
-
-```tsx
-// ?? Gunakan directive ini untuk mengaktifkan caching pada komponen
-"use cache";
-```
+Masih bisa berubah kapanpun, sehingga tidak dijelaskan lebih lanjut tentang cara penggunaannya di sini.

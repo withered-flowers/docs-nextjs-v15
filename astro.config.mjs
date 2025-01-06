@@ -73,7 +73,7 @@ export default defineConfig({
 					],
 				},
 				{
-					label: "Client & Server Component (WIP)",
+					label: "Client & Server Component",
 					items: [
 						{
 							label: "Step 0 - Inisialisasi Proyek",
