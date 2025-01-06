@@ -6,7 +6,6 @@ title: Intermezzo - Cache
 Tidak perlu dilakukan yah, ini hanya cukup tahu saja.
 :::
 
-
 Bagi teman-teman yang sudah pernah menggunakan NextJS (v14 ke bawah), ada perubahan yang cukup signifikan pada `cache` yang digunakan oleh NextJS.
 
 Nah bagi teman-teman yang baru menggunakan NextJS dan belum mengetahui `cache` itu apa, sepertinya bagian ini bisa disimak saja yah.
@@ -35,7 +34,7 @@ TL;DR
 
 - NextJS 14 ke bawah data cache adalah kewajiban (**opt-out** bila dibutuhkan)
 - NextJS 15 ke atas data cache adalah opsional (**opt-in** bila dibutuhkan)
-:::
+  :::
 
 ##### Cara Penggunaan Data Caching
 
@@ -49,9 +48,7 @@ const fetchDataDariManapun = async () => {
     cache: "force-cache",
     // ?? Di sini kita akan meminta NextJS untuk melakukan "tag" / "flag" pada data yang di-fetch
     next: {
-      tags: [
-        "tag-1"
-      ],
+      tags: ["tag-1"],
     },
   });
   const responseJson = await response.json();
@@ -73,7 +70,7 @@ const fnYangMelakukanRevalidasiCache = async () => {
   revaidateTag("tag-1");
 
   // Melakukan sesuatu bla bla bla....
-}
+};
 ```
 
 #### Component & Function Caching (Canary)
