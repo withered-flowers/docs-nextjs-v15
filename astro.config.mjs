@@ -122,8 +122,60 @@ export default defineConfig({
 					label: "Route Handler (WIP)",
 					items: [
 						{
-							label: "WIP",
+							label: "Step 0 - Inisialisasi Proyek",
+							slug: "route-handler/step-00",
+						},
+						{
+							label: "Step 0a - Intro Route Handler",
+							slug: "route-handler/step-00a",
+						},
+						{
+							label: "Step 0b - Membuat Konfigurasi Driver MongoDB",
 							slug: "route-handler/step-01",
+						},
+						{
+							label: "Step 1 - Membuat Kerangka Route Handler `/api/users`",
+							slug: "route-handler/step-02",
+						},
+						{
+							label: "Membuat Kerangka Route Handler `/api/users/:id`",
+							slug: "route-handler/step-03",
+						},
+						{
+							label: "Mengimplementasikan `GET /api/users`",
+							slug: "route-handler/step-04",
+						},
+						{
+							label: "Mengimplementasikan `POST /api/users`",
+							slug: "route-handler/step-05",
+						},
+						{
+							label: "Mengimplementasikan `zod` Sebagai Validasi Input",
+							slug: "route-handler/step-06",
+						},
+						{
+							label: "Mengimplementasikan `GET /api/users/:id`",
+							slug: "route-handler/step-07",
+						},
+						{
+							label: "Step 0a - Membuat Collection pada Atlas",
+							slug: "route-handler/step-08",
+						},
+						{
+							label: "Step 0a - Membuat Collection pada Atlas",
+							slug: "route-handler/step-09",
+						},
+						{
+							label: "Step 0a - Membuat Collection pada Atlas",
+							slug: "route-handler/step-10",
+						},
+						{
+							label: "Step 0a - Membuat Collection pada Atlas",
+							slug: "route-handler/step-11",
+						},
+						{
+							label: "Step 0a - Membuat Collection pada Atlas",
+							slug: "route-handler/step-12",
 						},
 					],
 				},

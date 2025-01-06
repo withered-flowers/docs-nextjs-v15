@@ -1,0 +1,106 @@
+---
+title: Intro Route Handler
+---
+
+import { FileTree } from '@astrojs/starlight/components';
+
+### React, tapi full-stack?
+
+Mari kita coba lihat dari situs NextJS sendiri, [apa itu NextJS?](https://nextjs.org/docs)
+
+> Next.js is a React framework for building full-stack web applications.
+
+Yang kalau diartikan,
+
+> 🔥 NextJS adalah sebuah framework React untuk membangun aplikasi web **full-stack** 🔥
+
+Ya, kita di sini tidak salah baca, **FULL-STACK**.
+
+Hmmm, artinya... 
+
+🤔 Selain frontend, kita bisa juga bikin backend donk yah di NextJS ini? 🤔
+
+### Backend di NextJS
+
+Wah, kalau begitu, gimana yah caranya?
+
+Nah untuk bisa membuat itu, kita harus mengetahui terlebih dahulu tentang suatu fitur di dalam NextJS yang bernama `Route Handler`.
+
+:::tip
+Untuk dokumentasi lengkap mengenai Route Handler, bisa diakses [di sini yah](https://nextjs.org/docs/app/building-your-application/routing/route-handlers)
+:::
+
+### The Magic, Route Handler(s)
+
+Route Handler adalah fitur dalam NextJS yang memungkinkan kita untuk membuat suatu custom request handler dalam suatu route (endpoint) dengan menggunakan `Request` dan `Response` API yang sesuai dengan standard Web.
+
+:::tip
+Untuk dokumentasi standard web `Request` dan `Response`, bisa diakses di:
+
+- [Request](https://developer.mozilla.org/en-US/docs/Web/API/Request)
+- [Response](https://developer.mozilla.org/en-US/docs/Web/API/Response)
+
+:::
+
+:::caution
+`Route Handler` hanya bisa berfungsi di dalam folder `app` (`App Router`) saja.
+
+Kalau di dalam folder `pages` (`Page Router`), ini tidak bisa digunakan, namun ada equivalentnya yaitu `API Routes`.
+
+Untuk dokumentasi lengkap mengenai `API Routes`, bisa diakses [di sini yah](https://nextjs.org/docs/pages/building-your-application/routing/api-routes)
+:::
+
+### Cara Pakai Route Handler
+
+Untuk bisa menggunakan Route Handler, kita hanya cukup dengan membuat sebuah file dengan nama `route.ts` di dalam folder `app`.
+
+:::danger
+Aturan penulisan:
+
+- Dalam satu route yang sama, hanya boleh ada satu file `route.ts` saja.
+- File `route.ts` dan `page.tsx` tidak boleh ada di dalam satu folder yang sama.
+
+:::
+
+Contoh struktur folder:
+
+<FileTree>
+- src
+  - app
+    - api
+      - route.ts valid - bisa diakses lewat /api (route handler)
+    - hello
+      - page.tsx valid - bisa diakses lewat /hello (component)
+    - salah
+      - page.tsx **TIDAK** valid - page.tsx dan route.ts bersamaan
+      - route.ts **TIDAK** valid - page.tsx dan route.ts bersamaan
+    - page.tsx
+</FileTree>
+
+Kemudian di dalam file route.ts, kita bisa menuliskan kode seperti berikut:
+
+```ts
+// File: route.ts
+
+// Misalnya ini di dalam folder app/api
+
+// fungsi yang disupport adalah yang sesuai dengan HTTP Method:
+// GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD
+
+// Endpoint: GET /api
+export const GET = async (
+    // Parameter pertama adalah Request (Optional, bila dibutuhkan)
+    request: Request,
+    // Parameter kedua adalah params (Optional, bila dibutuhkan)
+    { params }: { params: Promise<{ ... }>}
+  ) => {
+  // ... logic di sini
+
+  // Misalnya di sini kita akan mengembalikan response dalam JSON
+  return new Response.json({
+    message: 'Hello World'
+  });
+}
+```
+
+Nah sampai di sini sudah mengerti yah kemampuan dari Route Handler ini, selanjutnya kita akan masuk ke demo yah untuk mencoba penggunaan Route Handler ini.
