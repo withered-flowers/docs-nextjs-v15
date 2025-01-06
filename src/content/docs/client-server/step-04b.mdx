@@ -91,3 +91,17 @@ Pada versi NextJS v15 ini, NextJS juga memberikan fitur caching pada komponen da
 Hal ini berfungsi seperti `memo` pada React, dimana komponen atau fungsi yang sudah di-render akan disimpan pada cache dan tidak akan di-render ulang apabila tidak ada perubahan pada props atau state, hanya saja lebih difokuskan supaya tidak terjadi data re-fetching yang berlebihan.
 
 ##### Cara Penggunaan Component & Function Caching
+
+Berikut adalah contoh penggunaan component & function caching pada aplikasi NextJS:
+
+1. Aktifkan dynamicIO pada `next.config.ts`
+
+```ts
+// next.config.ts
+
+```
+
+```tsx
+// ?? Gunakan directive ini untuk mengaktifkan caching pada komponen
+"use cache";
+```
