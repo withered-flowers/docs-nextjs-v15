@@ -1,0 +1,60 @@
+---
+title: Pemilihan Database & ORM
+---
+
+### Database
+
+Untuk ~~mempersulit~~ mempermudah kita dalam mempelajari `Route Handler` dalam real-world case, pada pembeljaran ini kita juga akan menggunakan suatu database.
+
+Dalam pembelajaran ini, database yang akan digunakan adalah `SQLite`.
+
+Kenapa `SQLite` dan bukan yang lainnya, seperti `PostgreSQL`, `MySQL`, atau bahkan `MongoDB` ?
+
+- ~~ Karena materi ajar sebelumnya pakai `MongoDB` ~~
+- Karena `SQLite` merupakan DB yang cukup ringan tanpa butuh instalasi apapun
+- Karena `SQLite` merupakan RDBMS, setara dengan `PostgresSQL` ataupun `MySQL` yang mana cukup populer, baik di kalangan perusahaan ataupun freelancer.
+- Karena ada kemungkinan, yang akan populer ke depannya, adalah `local first`, dimana `SQLite` akan menjadi solusinya.
+  - Untuk pembahasan `local first` bisa dilanjut tonton [di tautan ini yah](https://www.youtube.com/watch?v=vwF1AdVk2o8)
+
+Biasanya untuk bisa menggunakan database di dalam aplikasi yang kita buat, kita membutuhkan beberapa hal:
+
+- `driver` yang digunakan untuk berkomunikasi dengan database yang dimiliki
+- (optional) `ORM` yang digunakan untuk mempercepat kita dalam menjembatani komunikasi antara RDBMS dengan aplikasi kita.
+
+Untuk si `driver`, yang bisa untuk `SQLite` itu sebenarnya ada cukup banyak, tapi kita fokusin ke dua ini saja yah:
+
+- `better-sqlite3`, yang sudah menjadi standar umum di beberapa library
+  - Sebenarnya ini udah cukup bagus, tapi kebetulan ada pesaingnya di bawah
+- `libSQL`, yang merupakan fork dari SQLite, dan digunakan oleh `turso`, salah satu provider SQLite multi-tenancy yang sangat populer.
+
+jadi sudah jelas yah untuk `driver` ini nanti kita akan pilih yang mana? yang `libSQL` tentunya.
+
+Selain itu untuk ORM juga, (lagi-lagi) kita akan mencoret kata kata _optional_ itu dan menggunakan si ORM ini.
+
+### ORM
+
+ORM, atau `Object Relational Mapper`, sesuai namanya, menjembatani Objek dalam bahasa pemrograman untuk bisa berkomunikasi dengan database secara lebih mudah, sehingga kita tidak perlu menuliskan bahasa database (`SQL`) di dalam aplikasi kita.
+
+untuk ORM di dalam JavaScript / TypeScript ini ada cukup banyak yah, seperti:
+
+- `sequelize`, yang ~sudah jadul~ masih cukup populer di beberapa Bootcamp
+- `typeorm`, yang seharusnya laku di pasaran pada masanya, tapi malah _flop_
+- `prisma`, yang sudah menjadi standar di banyak perusahaan
+- `drizzle`, yang baru muncul dan menjadi primadona beberapa developer senior belakangan ini
+
+Nah karena kita orangnya suka menggunakan yang baru baru, maka dalam pembelajaran ini pun sama, kita akan menggunakan si `drizzle` sebagai ORM !
+
+Kenapa `drizzle`?
+
+- Didesain untuk mendekati SQL syntax (senior biasa suka ini)
+- Performa, beberapa benchmark menyatakan kalau `drizzle` ini memiliki size dan penggunaan memory yang lebih kecil dari ORM lainnya seperti `prisma`
+  - Khususnya di dalam _serverless environment_
+- `Type Safety`, karena kita pakai TS, maka kalau ada yang sudah `type safety` dari awal, akan sangat memudahkan hidup kita
+
+:::caution
+Mencoba yang baru adalah hal yang menakutkan kan?
+
+Jadi yuk kita cobain bareng bareng si `drizzle` ini
+:::caution
+
+Okei, tanpa _ba bi bu_ lagi, mari yuk kita masuk ke demonya !

@@ -1,5 +1,40 @@
 ---
-title: Work in Progress
+title: Siapin Database
 ---
 
-Work in Progress
+### Akhirnya Demo
+
+Sampailah sudah kita di tahap demo yah setelah sepanjang itu teorinya.
+
+### Install Package
+
+:::caution
+Pastikan repo-nya sudah di clone yah !
+:::
+
+Pada langkah ini kita akan install package yang dibutuhkan terlebih dahulu yah.
+
+1. Buka terminal
+1. cd ke `sources/a-start/client-15`
+1. `npm install @next/env drizzle-orm @libsql/client`
+1. `npm install -D drizzle-kit tsx`
+
+### Menyiapkan Environment Variable
+
+Dalam NextJS ini, ceritanya untuk membaca environment variable, kita tidak memerlukan package tambahan lagi, karena sudah built-in dari runner-nya si NextJS ini.
+
+Sehingga pada langkah ini kita hanya membutuhkan untuk langsung membuat file .env saja:
+
+1. Buat file `.env` pada root folder (`sources/a-start/client-15`)
+
+   ```sh
+   DB_FILE_NAME=file:belajar.db
+   ```
+
+   Ini berfungsi untuk membuat file dengan nama `belajar.db` yang akan digunakan sebagai tempat penyimpanan databasenya kita
+
+### Menyiapkan drizzle
+
+Selanjutnya kita akan melakukan konfigurasi untuk bisa menggunakan `drizzle` di dalam aplikasinya kita yah.
+
+> Tenang saja... seharusnya sedikit kok yang dilakukan

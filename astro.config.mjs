@@ -136,6 +136,10 @@ export default defineConfig({
 							slug: "route-handler/step-00a",
 						},
 						{
+							label: "Memilih Database & ORM",
+							slug: "route-handler/step-00b",
+						},
+						{
 							label: "Membuat Konfigurasi Driver SQLite",
 							slug: "route-handler/step-01",
 						},
