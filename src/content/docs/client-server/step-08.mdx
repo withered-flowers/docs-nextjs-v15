@@ -1,0 +1,146 @@
+---
+title: Outro - Wrapper
+---
+
+### Real Use Case?
+
+Nah dari tadi kan kita masih mencoba untuk membuat / mengkotak-kotakkan antara si Server Component dengan si Client Component nih.
+
+Walaupun sebenarnya semuanya bisa dipilih satu saja.
+
+Tapi di real-world use casenya, ada nih beberapa kasus dimana kita hanya bisa menggunakan Client Component saja, salah satunya adalah:
+
+- Sebagai **Pembungkus Component** yang awalnya hanya support di React saja.
+
+Mari kita coba lihat pada kasus berikut yah
+
+:::note
+TL;DR
+
+Kita akan menambahkan animasi yang lucu ke halaman Home yang kita miliki (`/`), dengan menggunakan Lottie
+:::
+
+### Perkenalkan, Lottie React
+
+Hayo, pastinya udah tahu kan tentang **Lottie**?
+
+:::note
+Lottie adalah library yang dibuat oleh Airbnb yang memungkinkan kita untuk menggunakan animasi berdasarkan file JSON yang bisa dengan mudah dimasukkan ke dalam aplikasi web atau mobile yang kita buat.
+
+Untuk mengetahui lebih lanjut tentang Lottie, bisa dilihat [di sini yah](https://lottiefiles.com/)
+:::
+
+Nah, untuk bisa menggunakan Lottie, kita harus menggunakan library yang disediakan untuk memutar animasi Lottie yang ada.
+
+Bagusnya adalah, sudah ada package yang bisa digunakan untuk React, sehingga kita hanya perlu menggunakannya secara Component, yaitu [`lottie-react`](https://www.npmjs.com/package/lottie-react)
+
+Dengan menggunakan `lottie-react` ini, kita cukup menggunakan component dengan nama `Lottie` untuk menjalankan animasi JSON yang berbasis Lottie.
+
+Jeleknya adalah:
+
+- `lottie-react` tidak bisa digunakan di dalam Server Component, karena membutuhkan DOM untuk bisa dijalankan.
+- `lottie-react` tidak bisa digunakan langsung, sekalipun di dalam Client Component, karena membutuhkan DOM yang sudah ter-render.
+
+Bagusnya adalah:
+
+- Dengan menggunakan trik tertentu untuk menunggu DOM sudah ter-load pada Client Component, kita bisa menggunakan `lottie-react` di dalam Client Component.
+
+Nah jadi pada case ini, kita akan mencoba untuk menggunakan `lottie-react` di dalam Client Component, dan memasukkannya ke dalam halaman Home kita.
+
+### The Trick
+
+Yuk, tanpa _ba bi bu_ lagi mari kita membuat component-nya yah !
+
+1. Install package `lottie-react` ke dalam proyek dengan perintah:
+   - `npm install lottie-react`
+1. Download json yang dibutuhkan dari untuk animasinya [di sini yah](/client-server/homepage-fun.json)
+   - Klik kanan pada tautan di atas, kemudian pilih `simpan tautan sebagai` / `save link as`
+1. Simpan file tersebut di dalam folder `src/animations/`
+1. Buat file baru pada components dengan nama `lottie-client/ClientLottieReact.tsx` dan isi dengan kode berikut:
+
+   ```tsx
+   // File: ClientLottieReact.tsx
+   "use client";
+   // ?? Di sini kita akan menggunakan dynamic import untuk menunggu "document"
+   // ?? atau bahasa kerennya adalah "lazy load" untuk import lottie-react
+   import dynamic from "next/dynamic";
+
+   // ?? Karena di sini kita akan membungkus props dari lottie-react
+   // ?? Kita membutuhkan ComponentProps dari React
+   import type { ComponentProps } from "react";
+
+   // ?? Nah di sinilah magicnya terjadi
+   // ?? Kita akan import Lottie dari lottie-react ketika "document" sudah siap
+   // ?? di dalam DOM, "document" akan tersedia terlebih dahulu (event: DOMContentLoaded)
+   // ?? sebelum "window" (event: load)
+   const Lottie = dynamic(() => import("lottie-react"), {
+     ssr: false,
+   });
+
+   // ?? Di sini kita akan meng-extract props dari component Lottie yang berasal dari lottie-react
+   type LottieProps = ComponentProps<typeof Lottie>;
+
+   // ?? Di sini kita akan menggunakan teknik Wrapper untuk "membungkus" component Lottie
+   const ClientLottieReact = ({ ...props }: LottieProps) => {
+     return <Lottie {...props} />;
+   };
+
+   export default ClientLottieReact;
+   ```
+
+1. Buka halaman utama (`/src/app/page.tsx`) dan modifikasi kode menjadi sebagai berikut:
+
+   ```tsx
+   // File: page.tsx
+   import homepageFun from "@/animations/homepage-fun.json";
+   import ClientLottieReact from "@/components/lottie-client/ClientLottieReact";
+
+   import Link from "next/link";
+
+   export default function Home() {
+     return (
+       <>
+         <section className="flex h-screen w-full flex-col items-center justify-center gap-4">
+           <ClientLottieReact
+             animationData={homepageFun}
+             className="h-48 w-48"
+           />
+           <section>
+             <h1 className="text-3xl font-semibold text-gray-700">
+               Navigation
+             </h1>
+           </section>
+           <section className="flex flex-row gap-4">
+             <Link
+               className="text-blue-400 underline underline-offset-4 transition-colors duration-300 hover:text-blue-600"
+               href="/"
+             >
+               Home
+             </Link>
+             <Link
+               className="text-blue-400 underline underline-offset-4 transition-colors duration-300 hover:text-blue-600"
+               href="/about"
+             >
+               About
+             </Link>
+             <Link
+               className="text-blue-400 underline underline-offset-4 transition-colors duration-300 hover:text-blue-600"
+               href="/dashboard/jokes"
+             >
+               Dashboard (Jokes)
+             </Link>
+           </section>
+         </section>
+       </>
+     );
+   }
+   ```
+1. Jalankan proyek dan lihatlah pada browser, apakah animasi sudah muncul di halaman Home kita?
+
+:::tip
+Teknik di atas dinamakan teknik **Wrapper** yah, karena kita menggunakan `ClientLottieReact` sebagai pembungkus dari `Lottie` yang sebenarnya.
+
+Trik ini bisa digunakan untuk mengatasi masalah package yang sebenarnya jalan di React, tapi tidak jalan di NextJS.
+:::
+
+Selamat mempelajari NextJS dan sampai jumpa di pembelajaran berikutnya !

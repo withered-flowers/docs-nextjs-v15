@@ -91,7 +91,8 @@ Kemudian di dalam file route.ts, kita bisa menuliskan kode seperti berikut:
 export const GET = async (
     // Parameter pertama adalah Request (Optional, bila dibutuhkan)
     request: Request,
-    // Parameter kedua adalah params (Optional, bila dibutuhkan)
+    // Parameter kedua adalah props, untuk kebutuhan pengambilan params 
+    // (Optional, bila dibutuhkan)
     { params }: { params: Promise<{ ... }>}
   ) => {
   // ... logic di sini

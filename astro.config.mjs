@@ -116,25 +116,29 @@ export default defineConfig({
 							label: "Step 7 - Membuat Form Add Joke (Server Component)",
 							slug: "client-server/step-07",
 						},
+						{
+							label: "Outro - Wrapper Client Component",
+							slug: "client-server/step-08",
+						},
 					],
 				},
 				{
 					label: "Route Handler (WIP)",
 					items: [
 						{
-							label: "Step 0 - Inisialisasi Proyek",
+							label: "Inisialisasi Proyek",
 							slug: "route-handler/step-00",
 						},
 						{
-							label: "Step 0a - Intro Route Handler",
+							label: "Route Handler, Apaan tuh?",
 							slug: "route-handler/step-00a",
 						},
 						{
-							label: "Step 0b - Membuat Konfigurasi Driver MongoDB",
+							label: "Membuat Konfigurasi Driver SQLite",
 							slug: "route-handler/step-01",
 						},
 						{
-							label: "Step 1 - Membuat Kerangka Route Handler `/api/users`",
+							label: "Membuat Kerangka Route Handler `/api/users`",
 							slug: "route-handler/step-02",
 						},
 						{
@@ -156,26 +160,6 @@ export default defineConfig({
 						{
 							label: "Mengimplementasikan `GET /api/users/:id`",
 							slug: "route-handler/step-07",
-						},
-						{
-							label: "Step 0a - Membuat Collection pada Atlas",
-							slug: "route-handler/step-08",
-						},
-						{
-							label: "Step 0a - Membuat Collection pada Atlas",
-							slug: "route-handler/step-09",
-						},
-						{
-							label: "Step 0a - Membuat Collection pada Atlas",
-							slug: "route-handler/step-10",
-						},
-						{
-							label: "Step 0a - Membuat Collection pada Atlas",
-							slug: "route-handler/step-11",
-						},
-						{
-							label: "Step 0a - Membuat Collection pada Atlas",
-							slug: "route-handler/step-12",
 						},
 					],
 				},
