@@ -12,6 +12,8 @@
   "dependencies": {
     "@astrojs/starlight": "^0.30.3",
     "astro": "^5.0.2",
+    "astro-integration-lottie": "^0.3.2",
+    "lottie-web": "^5.12.2",
     "sharp": "^0.32.5"
   }
 }
