@@ -28,6 +28,9 @@ Sehingga pada langkah ini kita hanya membutuhkan untuk langsung membuat file .en
 1. Buat file `.env` pada root folder (`sources/a-start/client-15`)
 
    ```sh
+   # File: .env
+   # nama file database yang akan digunakan / dibuat
+   # konvensi: file:nama-file.db atau file:nama-file.sqlite3
    DB_FILE_NAME=file:belajar.db
    ```
 
@@ -38,3 +41,194 @@ Sehingga pada langkah ini kita hanya membutuhkan untuk langsung membuat file .en
 Selanjutnya kita akan melakukan konfigurasi untuk bisa menggunakan `drizzle` di dalam aplikasinya kita yah.
 
 > Tenang saja... seharusnya sedikit kok yang dilakukan
+
+1. Buat file dengan nama `index.ts` pada folder `src/db/schemas` (`src/db/schemas/index.ts`) untuk membuat informasi table / entitas yang akan dibuat yang berisi kode sebagai berikut:
+
+   ```ts
+   // File: index.ts
+   import { int, sqliteTable, text } from "drizzle-orm/sqlite-core";
+
+   export const UserTable = sqliteTable("table_users", {
+     id: int().primaryKey({
+       autoIncrement: true,
+     }),
+     username: text().notNull(),
+     email: text().notNull().unique(),
+     password: text().notNull(),
+     superadmin: int(),
+     original_name: text(),
+   });
+   ```
+
+   Pada kode di atas kita membuat sebuah table dengan nama `users` yang memiliki kolom `id`, `name`, `email`, dan `password`, serta `superadmin` dan `original_name` yang akan digunakan untuk keperluan lainnya.
+
+1. Buat file dengan nama `type.ts` pada folder `src/db/schemas` (`src/db/schemas/type.ts`) untuk membuat tipe data yang dimiliki dalam tabel yang ada, yang berisi kode sebagai berikut:
+
+   ```ts
+   // File: type.ts
+   import type { UserTable } from ".";
+
+   export type TypeUserSelect = typeof UserTable.$inferSelect;
+   export type TypeUserInsert = typeof UserTable.$inferInsert;
+   ```
+
+   Pada kode di atas kita membuat sebuah tipe data `User` yang merupakan tipe data dari table `UserTable` yang kita buat sebelumnya.
+
+1. Buat file dengan nama `drizzle.ts` pada folder `src/db/config` (`src/db/config/drizzle.ts`) yang digunakan untuk konfigurasi / instance dari database kita yang berisi kode sebagai berikut:
+
+   ```ts
+   // File: drizzle.ts
+   // ?? Di sini kita akan import seluruh data schema yang ada dengan nama `schema`
+   import * as schema from "@/db/schemas/index";
+   // ?? Ini akan digunakan untuk membuat instance drizzle
+   import { createClient } from "@libsql/client";
+   // ?? Ini akan digunakan untuk membaca environment variable dari luar aplikasi nextjs
+   import { loadEnvConfig } from "@next/env";
+   // ?? Ini akan digunakan untuk membuat instance drizzle dengan libsql
+   import { drizzle } from "drizzle-orm/libsql";
+
+   // ?? Ini dipakai untuk membaca environment variable dari luar aplikasi nextjs
+   const projectDir = process.cwd();
+   loadEnvConfig(projectDir);
+
+   if (!process.env.DB_FILE_NAME) {
+     throw new Error("DB_FILE_NAME is not defined");
+   }
+
+   // ?? Ini dipakai untuk membuat koneksi ke database sqlite
+   // ?? Export di sini bersifat opsional, tergantung kebutuhan
+   export const client = createClient({
+     url: process.env.DB_FILE_NAME,
+   });
+
+   // ?? Ini dipakai untuk membuat instance drizzle
+   // ?? Export di sini bersifat wajib, karena akan dipakai untuk membuat model
+   export const db = drizzle({
+     client,
+     schema,
+   });
+   ```
+
+1. Buat file dengan nama `drizzle.config.ts` pada root folder (di luar folder `src`) yang akan digunakan sebagai file konfigurasi ketika menggunakan `drizzle-kit` (drizzle cli yang memudahkan melakukan migrasi), dengan isinya adalah sebagai berikut:
+
+   ```ts
+   // File: drizzle.config.ts
+   import { loadEnvConfig } from "@next/env";
+   import { defineConfig } from "drizzle-kit";
+
+   // ?? Untuk membaca environment variable dari luar aplikasi nextjs
+   const projectDir = process.cwd();
+   loadEnvConfig(projectDir);
+
+   if (!process.env.DB_FILE_NAME) {
+     throw new Error("DB_FILE_NAME is not defined");
+   }
+
+   export default defineConfig({
+     // ?? Untuk membuat file migrasi
+     out: "./src/db/migrations",
+     // ?? Untuk membaca schema dari database yang didefinisikan
+     schema: "./src/db/schemas/index.ts",
+     dialect: "sqlite",
+     dbCredentials: {
+       url: process.env.DB_FILE_NAME,
+     },
+   });
+   ```
+
+### Seeding & Migration Drizzle
+
+Setelah selesai membuat konfigurasi, selanjutnya kita akan melakukan seeding dan migration untuk membuat tabel yang kita buat sebelumnya.
+
+1. Buka terminal
+1. cd ke `sources/a-start/client-15`
+1. Generate file migration dengan perintah `npx drizzle-kit migrate`
+1. Melakukan file migration dengan perintah `npx drizzle-kit migrate:`
+1. Melakukan seeding dengan perintah `npx tsx ./src/db/seed.ts`
+
+### Pembuatan models
+
+Setelah selesai membuat tabel, selanjutnya kita akan membuat model yang akan digunakan untuk mengakses data dari tabel yang sudah kita buat sebelumnya.
+
+1. Buat file dengan nama `user.ts` pada folder `src/db/models` (`src/db/models/user.ts`).
+
+   File ini nantinya akan berisi:
+
+   - Logic untuk mengakses data dari tabel `users` (`getUsers`), tapi tanpa password
+   - Logic untuk membuat data baru pada tabel `users` (`createUser`)
+   - Logic untuk mengakses data dari tabel `users` berdasarkan `id` (`getUserById`), tapi tanpa password
+   - Logic untuk mengakses data dari tabel `users` berdasarkan `email` (`getUserByEmail`), tapi dengan password
+
+   Isi dari filenya adalah sebagai berikut:
+
+   ```ts
+   // File: user.ts
+   import { generateHash } from "@/utils/hash";
+   import { eq, getTableColumns } from "drizzle-orm";
+   import { db } from "../config/drizzle";
+   import { UserTable } from "../schemas";
+   import type { TypeUserInsert } from "../schemas/type";
+
+   // Ceritanya ini untuk GET /api/users
+   export const getUsers = async () => {
+     // ?? Di sini kita akan meng-extract password (untuk di-exclude dari hasil query)
+     // ?? For the sake of security...
+     // eslint-disable-next-line @typescript-eslint/no-unused-vars
+     const { password, ...allColumns } = getTableColumns(UserTable);
+
+     // ?? Lakukan query
+     const users = await db
+       .select({
+         ...allColumns,
+       })
+       .from(UserTable);
+
+     // ?? Mengembalikan hasil query
+     // ?? Sudah type-safety, sesuai hasil exclude !
+     return users;
+   };
+
+   // Ceritanya ini untuk POST /api/users
+   export const createUser = async (user: TypeUserInsert) => {
+     // ?? Kita akan memodifikasi user yang baru
+     // ?? Karena kita butuh untuk meng-hash password
+     // ?? For the sake of security...
+     const modifiedUser: TypeUserInsert = {
+       ...user,
+       password: generateHash(user.password),
+     };
+
+     const result = await db.insert(UserTable).values(modifiedUser);
+
+     return result;
+   };
+
+   // Ceritanya ini untuk ambil data profile user
+   export const getUserById = async (id: number) => {
+     const user = await db.query.UserTable.findFirst({
+       where: eq(UserTable.id, id),
+       columns: {
+         // ?? Di sini kita akan meng-exclude password dari query
+         // ?? (For the sake of security)
+         password: false,
+       },
+     });
+
+     return user;
+   };
+
+   // Ceritanya ini dipakai untuk authentikasi
+   export const getUserByEmail = async (email: string) => {
+     // ?? Karena ini akan diperlukan untuk keperluan authentikasi nantinya
+     // ?? Di sini kita tidak meng-exclude password
+     const user = await db.query.UserTable.findFirst({
+       where: eq(UserTable.email, email),
+     });
+
+     return user;
+   };
+   ```
+
+Sampai di sini artinya untuk `models` sudah selesai nih, artinya sampai di titik ini, untuk urusan per-database-an, dan logic yang dipakai untuk mengakses data sudah selesai nih.
+
+Nah, selanjutnya kita akan masuk ke dalam **main course** yang akan kita bahas: `Route Handler` pada NextJS ini.
