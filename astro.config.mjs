@@ -144,28 +144,24 @@ export default defineConfig({
 							slug: "route-handler/step-01",
 						},
 						{
-							label: "Membuat Kerangka Route Handler `/api/users`",
+							label: "Membuat Route Handler `/api`",
 							slug: "route-handler/step-02",
 						},
 						{
-							label: "Membuat Kerangka Route Handler `/api/users/:id`",
+							label: "Membuat Route Handler `/api/users` - GET",
 							slug: "route-handler/step-03",
 						},
 						{
-							label: "Mengimplementasikan `GET /api/users`",
+							label: "Membuat Route Handler `/api/users/:id` - GET",
 							slug: "route-handler/step-04",
 						},
 						{
-							label: "Mengimplementasikan `POST /api/users`",
+							label: "Membuat Route Handler `/api/users` - POST",
 							slug: "route-handler/step-05",
 						},
 						{
 							label: "Mengimplementasikan `zod` Sebagai Validasi Input",
 							slug: "route-handler/step-06",
-						},
-						{
-							label: "Mengimplementasikan `GET /api/users/:id`",
-							slug: "route-handler/step-07",
 						},
 					],
 				},

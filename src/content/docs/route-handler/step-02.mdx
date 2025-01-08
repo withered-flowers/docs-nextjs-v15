@@ -1,5 +1,89 @@
 ---
-title: Work in Progress
+title: Route Handler - /api
 ---
 
-Work in Progress
+import { Tabs, TabItem } from "@astrojs/starlight/components";
+
+### Bikin `GET /api`
+
+Pada langkah ini, kita akan menecoba untuk membuat route handler untuk `GET /api`.
+
+route ini akan mengembalikan sebuah kembalian dalam bentuk json yang berisi sebuah key `message` dan value `Hello World`.
+
+1. Buat folder `api` pada folder app (`src/app/api`)
+1. Buat file `route.ts` di dalam folder tersebut (`src/app/api/route.ts`), dan isi filenya menjadi sebagai berikut:
+
+   ```ts
+   // File: route.ts
+   /* eslint-disable @typescript-eslint/no-unused-vars */
+   /* eslint-disable @typescript-eslint/no-empty-object-type */
+   // !! GET /api
+   export const GET = async (
+     // ?? Parameter pertama di sini kita bisa menggunakan Request atau NextRequest
+     // ?? Perbedaannya adalah Request adalah Web Standard Request,
+     // ?? Sedangkan NextRequest adalah Request yang sudah di-extend oleh NextJS
+     request: Request,
+     // ?? Parameter kedua adalah Props, seperti pada NextJS pada Functional Component,
+     // ?? Hanya saja di sini difokuskan kepada params
+     // ?? (Untuk mengambil dynamic parameter - seperti req.params pada express)
+     {
+       params,
+     }: {
+       // biome-ignore lint/complexity/noBannedTypes: <explanation>
+       params: Promise<{
+         // Di sini kita bisa mendefinisikan parameter apa saja yang akan kita gunakan
+         // Hanya saja karena di sini tidak ada dynamic route nya, maka sebenarnya kita belum butuh ini
+       }>;
+     }
+   ) => {
+     // Di sini kita bisa melakukan logic, seperti mengambil data dari DB
+     // Melakukan request ke tempat lainnya
+     // ?? ---
+     // ?? Dan jangan lupa untuk pada akhirnya HARUS mengembalikan response
+     // ?? Untuk response juga sama: Kita bisa menggunakan Response atau NextResponse
+     // ?? ---
+     // ?? Response adalah Web Standard Response
+     // ?? NextResponse adalah Response yang sudah di-extend oleh NextJS
+     // ?? ---
+     // ?? Di sini yang akan dikembalikan adalah Response dari Web API
+     // ?? (Standard Web API: Request untuk mendapatkan data dan Request untuk mengirimkan data)
+     // ?? - https://developer.mozilla.org/en-US/docs/Web/API/Request
+     // ?? - https://developer.mozilla.org/en-US/docs/Web/API/Response
+     return Response.json({
+       message: "Hello World",
+     });
+   };
+   ```
+
+1. Tinggal kita coba saja untuk menembak route handler dengan cara sebagai berikut:
+
+   {" "}
+
+   <Tabs>
+     <TabItem syncKey="postman" label="Postman">
+       <ol>
+         <li>Buka Postman</li>
+         <li>Gunakan method `GET`</li>
+         <li>Tembak ke `http://localhost:3000/api`</li>
+         <li>Lihat hasilnya</li>
+       </ol>
+     </TabItem>
+     <TabItem syncKey="curl" label="cURL">
+       <ol>
+         <li>Buka terminal</li>
+         <li>Pastikan cURL sudah terpasang dengan baik</li>
+         <li>Jalankan perintah `curl -X GET http://localhost:3000/api`</li>
+         <li>Lihat hasilnya</li>
+       </ol>
+     </TabItem>
+   </Tabs>
+
+Nah, apabila sampai pada tahap ini sudah berhasil artinya sudah berhasil membuat route handler pertama kita yang mengembalikan JSON, cukup mudah bukan?
+
+Tapi, sekarang ada sedikit tantangan nih:
+
+- Bagaimana bila response yang kita kembalikan itu ingin memiliki tipe data yang seragam?
+
+Nah untuk menjawab ini, dengan standard web Response yang biasa, ini cukup sulit yang dilakukan, karena itu untuk yang selanjutnya kita akan coba lihat dengan menggunakan `NextResponse` yah !
+
+(Sekalian kita gabungkan dengan mengambil data dari database yah !)
