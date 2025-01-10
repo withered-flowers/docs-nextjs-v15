@@ -2,7 +2,7 @@
 title: Route Handler - /api/users/[id] - GET
 ---
 
-import { Tabs, TabItem } from "@astrojs/starlight/components";
+import { FileTree, Tabs, TabItem } from "@astrojs/starlight/components";
 
 ### Bikin GET /api/users/[id]
 
@@ -13,6 +13,18 @@ Route ini akan memanggil fungsi `getUserById` yang sudah kita buat sebelumnya.
 Langkah-langkah pembuatannya adalah sebagai berikut:
 
 1. Buat file `route.ts` di dalam folder `src/app/api/users/[id]` (`src/app/api/users/[id]/route.ts`) dan isi file menjadi sebagai berikut:
+
+   <FileTree>
+    - src
+      - app
+        - api
+          - users
+            - [id]
+              - **route.ts**
+            - route.ts
+          - route.ts
+          - types.ts
+   </FileTree>
 
    ```ts
    // File: route.ts
@@ -97,6 +109,18 @@ Langkah-langkah pembuatannya adalah sebagai berikut:
    :::
 
 1. Nah sekarang saatnya penyelesaian route handler ini, mari kita coba untuk memanggil database via fungsi `getUserById` yang sudah kita buat sebelumnya. Modifikasi file `route.ts` di dalam folder `src/app/api/users/[id]` (`src/app/api/users/[id]/route.ts`) menjadi sebagai berikut:
+
+   <FileTree>
+    - src
+      - app
+        - api
+          - users
+            - [id]
+              - **route.ts**
+            - route.ts
+          - route.ts
+          - types.ts
+   </FileTree>
 
    ```ts
    // File: route.ts

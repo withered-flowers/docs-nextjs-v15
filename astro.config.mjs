@@ -125,42 +125,42 @@ export default defineConfig({
 					],
 				},
 				{
-					label: "Route Handler (WIP)",
+					label: "Route Handler",
 					items: [
 						{
-							label: "Inisialisasi Proyek",
+							label: "Step 0 - Inisialisasi Proyek",
 							slug: "route-handler/step-00",
 						},
 						{
-							label: "Route Handler, Apaan tuh?",
+							label: "Step 0a - Kenalan sama Route Handler",
 							slug: "route-handler/step-00a",
 						},
 						{
-							label: "Memilih Database & ORM",
+							label: "Step 0b - Milih Database & ORM",
 							slug: "route-handler/step-00b",
 						},
 						{
-							label: "Membuat Konfigurasi Driver SQLite",
+							label: "Step 1 - Bikin Konfigurasi Driver SQLite",
 							slug: "route-handler/step-01",
 						},
 						{
-							label: "Membuat Route Handler /api - GET",
+							label: "Step 2 - Bikin Route Handler /api - GET",
 							slug: "route-handler/step-02",
 						},
 						{
-							label: "Membuat Route Handler /api/users - GET",
+							label: "Step 3 - Bikin Route Handler /api/users - GET",
 							slug: "route-handler/step-03",
 						},
 						{
-							label: "Membuat Route Handler /api/users/:id - GET",
+							label: "Step 4 - Bikin Route Handler /api/users/:id - GET",
 							slug: "route-handler/step-04",
 						},
 						{
-							label: "Membuat Route Handler /api/users - POST",
+							label: "Step 5 - Bikin Route Handler /api/users - POST",
 							slug: "route-handler/step-05",
 						},
 						{
-							label: "Mengimplementasikan validasi input",
+							label: "Step 6 - Implementasiin validasi input",
 							slug: "route-handler/step-06",
 						},
 					],

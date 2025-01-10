@@ -2,7 +2,7 @@
 title: Route Handler - /api/users - GET
 ---
 
-import { Tabs, TabItem } from "@astrojs/starlight/components";
+import { FileTree, Tabs, TabItem } from "@astrojs/starlight/components";
 
 ### Bikin GET /api/users
 
@@ -13,6 +13,14 @@ Route ini akan memanggil fungsi `getUsers` yang sudah kita buat sebelumnya.
 Langkah-langkah pembuatannya adalah sebagai berikut:
 
 1. Buat file `types.ts` di dalam folder `src/app/api` (`/src/app/api/types.ts`) dan isi file menjadi sebagai berikut:
+
+   <FileTree>
+    - src
+      - app
+        - api
+          - route.ts
+          - **types.ts**
+   </FileTree>
 
    ```ts
    // File: types.ts
@@ -34,6 +42,16 @@ Langkah-langkah pembuatannya adalah sebagai berikut:
    ```
 
 1. Buat file `route.ts` di dalam folder `src/app/api/users` (`src/app/api/users/route.ts`) dan isi file menjadi sebagai berikut:
+
+   <FileTree>
+    - src
+      - app
+        - api
+          - users
+            - **route.ts**
+          - route.ts
+          - types.ts
+   </FileTree>
 
    ```ts
    // ?? Di sini kita akan mencoba untuk menggunakan NextResponse sebagai
