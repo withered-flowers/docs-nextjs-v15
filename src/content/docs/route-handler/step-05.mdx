@@ -1,5 +1,174 @@
 ---
-title: Work in Progress
+title: Route Handler - /api/users - POST
 ---
 
-Work in Progress
+import { Tabs, TabItem } from "@astrojs/starlight/components";
+
+### Bikin POST /api/users
+
+Pada langkah ini kita akan mencoba untuk membuat route handler untuk `POST /api/users`.
+
+Route ini akan memanggil fungsi `createUsers` yang sudah kita buat sebelumnya.
+
+Langkah-langkah pembuatannya adalah sebagai berikut:
+
+1.  Buka kembali file `route.ts` pada folder `src/app/api/users` (`src/app/api/users/route.ts`) dan kita akan memodifikasi kode untuk menambahkan fungsi `POST` sebagai berikut:
+
+    :::tip
+    Perhatikan comment dengan awalan `Step 5.x - <Penjelasan>`
+    :::
+
+    ```ts
+    // File: route.ts
+    // ?? Di sini kita akan mencoba untuk menggunakan NextResponse sebagai
+    // ?? Pengganti dari Response yah
+    import { NextResponse } from "next/server";
+
+    // ?? Import fungsi dan type yang diperlukan dari `@/db/models/user.ts`
+    import { getUsers } from "@/db/models/user";
+
+    import { createUser } from "@/db/models/user";
+    // ?? Step 5.1 - Import fungsi yang diperlukan
+    import type { NextRequest } from "next/server";
+
+    // ?? Import type yang dibutuhkan untuk kembalian Response
+    import type { MyResponse } from "@/app/api/types";
+
+    // ?? Apabila ingin menggunakan typing kembalian dari query getUsers bisa menggunakan ini
+    // type TypeReturnedUsers = Awaited<ReturnType<typeof getUsers>>;
+
+    // !! GET /api/users
+    export const GET = async () => {
+      // ?? Di sini kita akan menggunakan fungsi getUsers yang sudah kita buat
+      const users = await getUsers();
+
+      // ?? Di sini kita akan mulai untuk menggunakan NextResponse yang merupakan extend dari Response
+      // ?? Keuntungan menggunakan NextResponse adalah kita bisa menuliskan kembalian Response dengan lebih presisi dengan Generic Type dan memiliki beberapa method tambahan yang tidak ada di Response.
+      // ?? https://nextjs.org/docs/pages/api-reference/functions/next-server#nextresponse
+
+      // ?? Misalnya di sini kita menuliskan bahwa Response yang akan dikembalikan adalah MyResponse yang mana memiliki Generic Type unknown untuk key "data"
+      // ?? Kenapa unknown? Karena kita tidak tahu (dan tidak perlu tahu) kembalian dari getUsers
+
+      // ?? TL;DR:
+      // ?? NextResponse.json sudah method terakhir, mengembalikan Response dalam bentuk JSON, dan kita tidak memproses datanya lagi, sehingga unknown pun sudah cukup
+      return NextResponse.json<MyResponse<unknown>>({
+        statusCode: 200,
+        message: "Pong from GET /api/users !",
+        // ?? Di sini kita akan mengirimkan data users
+        data: users,
+      });
+    };
+
+    // ?? Step 5.2 Menambahkan fungsi HTTP Method yang baru
+    // !! POST /api/users
+    export const POST = async (
+      // ?? Sekarang kita akan menggunakan NextRequest
+      req: NextRequest
+      // !! Di sini kita tidak menggunakan dynamic route, sehingga tidak perlu params
+    ) => {
+      // ?? Step 5.3 Membaca data yang diberikan oleh client
+      // ?? Asumsi:
+      // ?? - data dari client berupa JSON
+      const jsonData = await req.json(); // Perhatikan bahwa jsonData ini adalah "any"
+
+      // ?? Apabila tidak ingin berasumsi, maka bisa dicek dari headers "Content-Type"
+      // ?? Bila JSON = application/json
+      // ?? Bila Form Standard = application/x-www-form-urlencoded
+      // ?? Bila Form Data DIAWALI dengan multipart/form-data
+      // !! (Khusus Form Data bukan SAMA DENGAN)
+
+      /*
+          const headerContentType = req.headers.get("Content-Type");
+          
+          if (headerContentType === "application/json") {
+             // Bikin magic-nya di sini
+          } else if (
+             headerContentType === "application/x-www-form-urlencoded" ||
+             headerContentType?.startsWith("multipart/form-data")
+          ) {
+             // Bikin magic nya di sini
+          }
+          */
+
+      // ?? Data dari hasil terimaan JSON akan kita berikan ke fungsi createUser
+      const result = await createUser(jsonData);
+
+      // ?? Asumsinya data sudah berhasil diterima dan berhasil diproses, maka data akan bertambah
+      // ?? Sehingga kembaliannya adalah 201
+      return NextResponse.json<MyResponse<unknown>>(
+        {
+          statusCode: 201,
+          data: result,
+        },
+        {
+          status: 201,
+        }
+      );
+    };
+    ```
+
+1.  Setelah itu, mari kita coba tembak route ini dengan menggunakan Postman atau cURL.
+
+      <Tabs style="display: flex; flex-direction: column; justify-content: start;">
+
+        <TabItem syncKey="postman" label="Postman">
+            <ol>
+              <li>Buka Postman</li>
+              <li>Gunakan method `POST`</li>
+              <li>Tembak ke `http://localhost:3000/api/users`</li>
+              <li>
+                  <span>Berikan data (`body`) dalam bentuk </span>
+                  <span>`raw json` (`Body - raw - json`)</span>
+                  <span>
+                    ```json
+                    {
+                      "username": "johndoe",
+                      "email": "johndoe@mail.com",
+                      "password": "12346"
+                    }
+                    ```
+                  </span>
+              </li>
+              <li>Lihat hasilnya</li>
+            </ol>
+        </TabItem>
+
+        <TabItem syncKey="curl" label="cURL">
+            <ol>
+              <li>Buka terminal</li>
+              <li>
+                  <span>Jalankan perintah</span>{" "}
+                  <span>
+                  ```bash
+                  curl -i -X POST -H 'Content-Type: application/json' -d '{ "username": "johndoe2", "email": "johndoe2@mail.com", "password": "123456" }' http://localhost:3000/api/users
+                  ```
+                  </span>
+              </li>
+              <li>Lihat hasilnya</li>
+            </ol>
+        </TabItem>
+
+      </Tabs>
+
+    :::caution
+    Apabila tidak berhasil, maka response yang diberikan dari server hanyalah kosong (karena kita belum melakukan pengecekan error).
+
+    Untuk mengetahui error atau tidak, cek HTTP status code yang diberikan dari perintah di atas.
+    :::
+
+1.  Bila berhasil, maka kita akan mendapatkan response dengan status code `201` dan data kembalian ketika berhasil dimasukkan.
+
+    :::note
+    Kembalian data pada saat berhasil memasukkan data **TIDAK SAMA DENGAN** data yang dimasukkan yah, karena formatnya berbeda.
+
+    Perhatikan `rowsAffected` yang menyatakan berapa baris yang terkena dampak dari memasukkan data ini.
+    :::
+
+Nah sampai di sini sebenarnya untuk problem POST /api/users secara garis besar sudah beres nih, tapi ada sedikit masalah tambahan yang perlu diatasi:
+
+- Bagaimana yah cara menghandle error yang ada pada saat memasukkan datanya?
+- Hasil dari `req.json` MASIH menghasilkan data yang bersifat `any`, dan kita langsung memasukkannya ke dalam fungsi `createUser` tanpa melakukan pengecekan terlebih dahulu.
+
+Untuk menyelesaikan ini sebenarnya solusinya cukup simple, yaitu kita tinggal melakukan `VALIDASI INPUT` sebelum memasukkan data ke dalam database.
+
+Sehingga pada langkah selanjutnya kita akan mencoba untuk implementasi validasi input yah !

@@ -1,5 +1,173 @@
 ---
-title: Work in Progress
+title: Route Handler - /api/users/[id] - GET
 ---
 
-Work in Progress
+import { Tabs, TabItem } from "@astrojs/starlight/components";
+
+### Bikin GET /api/users/[id]
+
+Pada langkah ini kita akan mencoba untuk membuat route handler untuk `GET /api/users/[id]`.
+
+Route ini akan memanggil fungsi `getUserById` yang sudah kita buat sebelumnya.
+
+Langkah-langkah pembuatannya adalah sebagai berikut:
+
+1. Buat file `route.ts` di dalam folder `src/app/api/users/[id]` (`src/app/api/users/[id]/route.ts`) dan isi file menjadi sebagai berikut:
+
+   ```ts
+   // File: route.ts
+   // ?? Di sini kita masih akan menggunakan NextResponse, dan menggunakan NextRequest juga
+   import { type NextRequest, NextResponse } from "next/server";
+
+   // ?? Import type yang dibutuhkan untuk kembalian Response
+   import type { MyResponse } from "@/app/api/types";
+
+   // !! GET /api/users/[id]
+   export const GET = async (
+     // ?? Untuk ini kita bisa menggunakan Request ataupun NextRequest
+     // ?? Karena di sini kita belum menggunakan si requestnya, jangan lupa gunakan underscore
+     // ?? (Untuk menandakan bahwa kita tidak akan menggunakan parameter tersebut)
+     _req: NextRequest,
+     // ?? Karena sekarang kita sudah memiliki dynamic route-nya,
+     // ?? Maka sekarang kita akan menggunakan Props yang memiliki key params
+     {
+       params,
+     }: {
+       // ?? Di sini kita akan menggunakan dynamic route, yaitu id
+       // ?? Karena id adalah string, maka kita akan menggunakan string
+
+       // ?? Perhatikan pada NextJS v15, params ini sudah berupa Promise
+       params: Promise<{
+         id: string;
+       }>;
+     }
+   ) => {
+     // ?? Karena params ini sudah berupa Promise, maka pada saat mengambil paramsnya kita harus menggunakan await
+     // ?? Akan menghasilkan sebuah object yang di dalamnya memiliki key id, sehingga bisa kita de-structure untuk mendapatkan id
+     const { id } = await params;
+
+     return NextResponse.json<MyResponse<unknown>>({
+       statusCode: 200,
+       // ?? Di sini kita akan mengembalikan id yang kita dapatkan dari params
+       data: id,
+     });
+   };
+   ```
+
+   :::note
+   Pada langkah ini kita belum menggunakan / memanggil database
+
+   Kita coba perlahan-lahan yah, seperti halnya dalam biasanya kita meng-koding, bikinnya kecil kecil, jangan langsung besar !
+
+   ~ _**Alon-alon waton kelakon**_ - `Perlahan-lahan jalan sampai tujuan` ~
+
+   :::
+
+1. Asik quotesnya? Yuk kita lanjut.
+
+   Mari kita coba untuk menembak ke route tersebut dan melihat hasilnya
+
+   <Tabs style="display: flex; flex-direction: column; justify-content: start;">
+     <TabItem syncKey="postman" label="Postman">
+       <ol>
+         <li>Buka Postman</li>
+         <li>Gunakan method `GET`</li>
+         <li>Tembak ke `http://localhost:3000/api/users/2`</li>
+         <li>Lihat hasilnya</li>
+       </ol>
+     </TabItem>
+     <TabItem syncKey="curl" label="cURL">
+       <ol>
+         <li>Buka terminal</li>
+         <li>
+           <span>Jalankan perintah</span>{" "}
+           <span>`curl -X GET http://localhost:3000/api/users/2`</span>
+         </li>
+         <li>Lihat hasilnya</li>
+       </ol>
+     </TabItem>
+   </Tabs>
+
+   Pada saat menembak ke route tersebut, kita akan mendapatkan response yang berisi `id` yang kita tembak.
+
+   :::caution
+   Perhatikan bahwa `id` yang didapatkan dari params adalah dalam bentuk `string`, sehingga nanti kita harus menyesuaikan dengan kebutuhan kita.
+
+   Dimana dalam kasus ini ketika kita menggunakan `id` untuk mencari data di database, kita harus mengubahnya menjadi `number` terlebih dahulu.
+   :::
+
+1. Nah sekarang saatnya penyelesaian route handler ini, mari kita coba untuk memanggil database via fungsi `getUserById` yang sudah kita buat sebelumnya. Modifikasi file `route.ts` di dalam folder `src/app/api/users/[id]` (`src/app/api/users/[id]/route.ts`) menjadi sebagai berikut:
+
+   ```ts
+   // File: route.ts
+   // ?? Di sini kita masih akan menggunakan NextResponse, dan menggunakan NextRequest juga
+   import { type NextRequest, NextResponse } from "next/server";
+
+   // ?? Import type yang dibutuhkan untuk kembalian Response
+   import type { MyResponse } from "@/app/api/types";
+
+   // ?? Import function getUserById yang sudah kita buat sebelumnya
+   import { getUserById } from "@/db/models/user";
+
+   // ?? Apabila ingin menggunakan typing kembalian dari query getUserById bisa menggunakan ini
+   // type TypeReturnedUser = Awaited<ReturnType<typeof getUserById>>;
+
+   // !! GET /api/users/[id]
+   export const GET = async (
+     // ?? Untuk ini kita bisa menggunakan Request ataupun NextRequest
+     // ?? Karena di sini kita belum menggunakan si requestnya, jangan lupa gunakan underscore
+     // ?? (Untuk menandakan bahwa kita tidak akan menggunakan parameter tersebut)
+     _req: NextRequest,
+     // ?? Karena sekarang kita sudah memiliki dynamic route-nya,
+     // ?? Maka sekarang kita akan menggunakan Props yang memiliki key params
+     {
+       params,
+     }: {
+       // ?? Di sini kita akan menggunakan dynamic route, yaitu id
+       // ?? Karena id adalah string, maka kita akan menggunakan string
+
+       // ?? Perhatikan pada NextJS v15, params ini sudah berupa Promise
+       params: Promise<{
+         id: string;
+       }>;
+     }
+   ) => {
+     // ?? Karena params ini sudah berupa Promise, maka pada saat mengambil paramsnya kita harus menggunakan await
+     // ?? Akan menghasilkan sebuah object yang di dalamnya memiliki key id, sehingga bisa kita de-structure untuk mendapatkan id
+     const { id } = await params;
+
+     const user = await getUserById(Number(id));
+
+     // ?? Apabila data tidak ditemukan, kita akan mengembalikan response 404
+     // ?? Pada saat data kosong, maka berupa null, sehingga bisa kita gunakan untuk mengecek apakah falsy
+     if (!user) {
+       // ?? Nah ketika data tersebut tidak ada, maka harapannya adalah data tidak boleh ada kan?
+       // ?? Sehingga di sini kita akan menggunakan Generic Type untuk si data adalah "never"
+       return NextResponse.json<MyResponse<never>>(
+         {
+           // ?? Ini hanyalah statusCode yang berupa data JSON
+           statusCode: 404,
+           error: "Data user tidak ditemukan",
+         },
+         {
+           // ?? Ini merupakan status code yang diberikan sebagai HTTP Status Code
+           status: 404,
+         }
+       );
+     }
+
+     // Bila di temukan, kita akan mengembalikan response 200
+     return NextResponse.json<MyResponse<unknown>>({
+       statusCode: 200,
+       // // ?? Di sini kita akan mengembalikan id yang kita dapatkan dari params
+       // Sekarang kita akan mengirimkan data user yang ditemukan
+       data: user,
+     });
+   };
+   ```
+
+1. Ulangi lagi langkah ke dua, dan lihat hasilnya, apakah sudah mendapatkan data yang diinginkan?
+
+Yak, sampai di sini artinya kita sudah berhasil untuk menarik data dari backend kita, yang menggunakan "pemilih" dari dynamic router kita, serta menghasilkan response kembalian dalam bentuk JSON.
+
+Selanjutnya akan mulai masuk ke bagian yang cukup _ngeri-ngeri sedap_ yah, yaitu **menambahkan data**.
