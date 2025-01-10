@@ -1,5 +1,274 @@
 ---
-title: Work in Progress
+title: Implementasi Validasi Input
 ---
 
-Work in Progress
+import { Tabs, TabItem } from "@astrojs/starlight/components";
+
+### Bikin Validasi Input
+
+Pada langkah ini kita akan mencoba untuk membuat validasi input pada route handler `POST /api/users`, sehingga pada saat user mengirimkan data yang tidak sesuai, kita bisa memberikan feedback bahwa input tidak valid.
+
+Nah untuk ini kita akan menggunakan library tambahan untuk melakukan validasi input. Library ini bernama `zod`.
+
+:::note
+Kenapa `zod` dan bukan yang lainnya?
+
+Karena `zod` memiliki fitur yang cukup lengkap, mudah digunakan, dan memiliki dokumentasi yang cukup baik.
+
+Lalu kalau ada yang bertanya kenapa bukan `valibot`, yang terbaru, mirip dengan `zod` dan juga dibuat oleh tim yang sama dengan `zod`, jawabannya adalah karena `valibot` masih dalam tahap beta dan dokumentasinya belum terlalu lengkap.
+
+(`valibot` bahkan belum v1.0.0 !)
+:::
+
+### zod Apaan sih?
+
+`zod` adalah library untuk membuat skema validasi data. `zod` memiliki fitur yang cukup lengkap, mudah digunakan, dan memiliki dokumentasi yang cukup baik.
+
+Pada websitenya sendiri, juga dibilang bahwa `zod` adalah
+
+> _Type-Safe Schema Validation for JavaScript_,
+
+sehingga sudah sangat mendukung **TypeScript**.
+
+Untuk lebih lengkap mengenai `zod`, bisa dibuka [di tautan ini](https://zod.dev) yah
+
+### Yuk kita pakai si zod
+
+Nah mari sekarang kita mulai untuk mengimplementasikan `zod` pada route handler `POST /api/users`.
+
+1.  Buka terminal, cd ke proyek, dan install package zod dengan perintah `npm install zod`
+1.  Jalankan kembali server dengan perintah `npm run dev`
+1.  Buka file `route.ts` pada folder `src/app/api/users` (`src/app/api/users/route.ts`) dan kita akan memodifikasi kode untuk menambahkan validasi input sebagai berikut:
+
+    :::tip
+    Perhatikan comment dengan awalan `Step 6.x - <Penjelasan>`
+    :::
+
+    :::caution
+    Untuk menghindari repetisi, beberapa penjelasan yang sudah ada sebelumnya, commentnya akan dihapus dari kode di bawah ini yah
+    :::
+
+    ```ts
+    // File: route.ts
+    import { NextResponse } from "next/server";
+
+    import { getUsers } from "@/db/models/user";
+
+    import { createUser } from "@/db/models/user";
+    import type { NextRequest } from "next/server";
+
+    import type { MyResponse } from "@/app/api/types";
+
+    // ?? Step 6.1 - Import zod untuk melakukan validasi data
+    import { z } from "zod";
+
+    // ?? Apabila ingin menggunakan typing kembalian dari query getUsers bisa menggunakan ini
+    // type TypeReturnedUsers = Awaited<ReturnType<typeof getUsers>>;
+
+    // ?? Step 6.2 - Membuat schema untuk validasi data
+    // ?? Asumsi:
+    // ?? - Data yang diterima dari client adalah JSON
+    // ?? - Untuk data yang bisa dimasukkan adalah:
+    // ??   - username: string, wajib diisi
+    // ??   - email: string, wajib format email
+    // ??   - password: string, wajib diisi, minimal 6 karakter
+    // ??   - superuser: number (0/1) - optional
+    // ??   - original_name: string - optional
+    const CreateUserSchema = z.object({
+      username: z.string().nonempty({
+        // ?? Di sini kita akan memberikan pesan error apabila username kosong
+        message: "Username tidak boleh kosong",
+      }),
+      email: z.string().email({
+        // ?? Di sini kita akan memberikan pesan error apabila email tidak valid
+        message: "Email tidak valid",
+      }),
+      password: z.string().min(6, {
+        // ?? Di sini kita akan memberikan pesan error apabila password kurang dari 6 karakter
+        message: "Password minimal 6 karakter",
+      }),
+      superuser: z
+        .number()
+        .min(0, {
+          // ?? Di sini kita akan memberikan pesan error apabila superuser kurang dari 0
+          message: "Superuser harus 0 atau 1",
+        })
+        .max(1, {
+          // ?? Di sini kita akan memberikan pesan error apabila superuser lebih dari 1
+          message: "Superuser harus 0 atau 1",
+        })
+        .optional(),
+      original_name: z
+        .string({
+          // ?? Di sini kita akan memberikan pesan error apabila original_name bukan string
+          message: "Nama asli harus berupa string",
+        })
+        .optional(),
+    });
+
+    // !! GET /api/users
+    export const GET = async () => {
+      const users = await getUsers();
+
+      return NextResponse.json<MyResponse<unknown>>({
+        statusCode: 200,
+        message: "Pong from GET /api/users !",
+        data: users,
+      });
+    };
+
+    // !! POST /api/users
+    export const POST = async (req: NextRequest) => {
+      // ?? Step 6.6 - Membungkus logic dengan try - catch block
+      try {
+        const jsonData = await req.json(); // Perhatikan bahwa jsonData ini adalah "any"
+
+        // ?? Step 6.3 - Validasi data yang diterima dari client
+        // ?? Untuk melakukan validasi, kita akan menggunakan CreateUserSchema
+        // ?? dan bisa menggunakan 2 cara:
+        // ?? - CreateUserSchema.parse(jsonData) -> akan melempar error apabila data tidak valid
+        // ?? - CreateUserSchema.safeParse(jsonData) -> akan mengembalikan object yang berisi data valid atau error
+        // ?? Di sini kita akan menggunakan safeParse
+        const parsedData = CreateUserSchema.safeParse(jsonData);
+
+        // parsedData akan mengembalikan object dengan tipe data berikut:
+        /*
+           {
+             success:boolean;
+             data: unknown;
+             error: z.ZodError | null;
+           }
+         */
+
+        // ?? Step 6.4 - Penanganan apabila data tidak valid
+        if (!parsedData.success) {
+          // ?? Bila tidak valid, kita akan throw error yang merupakan ZodError
+          // ?? Lalu ditangkapnya dimana? Di dalam catch block
+          // ?? Tapi kan belum ada, jadi kita akan buat catch blocknya
+          throw parsedData.error;
+        }
+
+        // ?? Step 6.5 - Di sini kita akan mengganti passing data yang diberikan ke createUser
+        // ?? Awalnya kita memberikan jsonData (any), tapi sekarang kita akan memberikan parsedData.data
+        // ?? Kenapa? Karena parsedData.data sudah memiliki tipe data yang valid (sudah bukan "any" lagi)
+        // // ?? Data dari hasil terimaan JSON akan kita berikan ke fungsi createUser
+        const result = await createUser(parsedData.data);
+
+        return NextResponse.json<MyResponse<unknown>>(
+          {
+            statusCode: 201,
+            data: result,
+          },
+          {
+            status: 201,
+          }
+        );
+      } catch (err) {
+        // ?? Step 6.7 - Penanganan error dari validasi
+        // ?? Perhatikan tipe data dari err adalah unknown dan kita akan menangkap error dari zod yang merupakan ZodError
+
+        // ?? Di sini kita akan melakukan pengecekan terlebih dahulu
+        // ?? Apakah errornya merupakan ZodError?
+        if (err instanceof z.ZodError) {
+          console.log(err);
+
+          // Kita akan mengambil path dan message dari error yang terjadi
+          // path = key dari object yang tidak valid
+          // message = pesan error yang diberikan
+          const errPath = err.issues[0].path[0];
+          const errMessage = err.issues[0].message;
+
+          // ?? Pada saat terjadi error, kita harus megembalikan BadRequest (400)
+          return NextResponse.json<MyResponse<never>>(
+            // Data yang dikirimkan ke client
+            {
+              statusCode: 400,
+              error: `${errPath} - ${errMessage}`,
+            },
+            {
+              // HTTP Status Code
+              status: 400,
+            }
+          );
+        }
+
+        // ?? Step 6.8a - Penanganan error lainnya
+        // ?? Bila error dari SQLite, maka kita akan mengembalikan 400
+        if (err instanceof LibsqlError) {
+          // ?? Apabila error merupakan LibsqlError, maka kita akan mengembalikan 400
+          return NextResponse.json<MyResponse<never>>(
+            {
+              statusCode: 400,
+              error: err.message,
+            },
+            {
+              status: 400,
+            }
+          );
+        }
+
+        // ?? Step 6.8b - Penanganan error lainnya
+        // ?? Apabila error bukan dari validasi, maka kita akan mengembalikan Internal Server Error (500)
+        console.log(err);
+
+        return NextResponse.json<MyResponse<never>>(
+          {
+            statusCode: 500,
+            message: "Internal Server Error !",
+          },
+          {
+            status: 500,
+          }
+        );
+      }
+    };
+    ```
+
+1.  Setelah itu, mari kita coba tembak route ini dengan menggunakan Postman atau cURL, dengan data yang salah, misalnya password kurang dari 6 karakter.
+
+      <Tabs style="display: flex; flex-direction: column; justify-content: start;">
+
+        <TabItem syncKey="postman" label="Postman">
+            <ol>
+              <li>Buka Postman</li>
+              <li>Gunakan method `POST`</li>
+              <li>Tembak ke `http://localhost:3000/api/users`</li>
+              <li>
+                  <span>Berikan data (`body`) dalam bentuk </span>
+                  <span>`raw json` (`Body - raw - json`)</span>
+                  <span>
+                    ```json
+                    {
+                      "username": "johndoe",
+                      "email": "johndoe@mail.com",
+                      "password": "12346"
+                    }
+                    ```
+                  </span>
+              </li>
+              <li>Lihat hasilnya</li>
+            </ol>
+        </TabItem>
+
+        <TabItem syncKey="curl" label="cURL">
+            <ol>
+              <li>Buka terminal</li>
+              <li>
+                  <span>Jalankan perintah</span>{" "}
+                  <span>
+                  ```bash
+                  curl -i -X POST -H 'Content-Type: application/json' -d '{ "username": "johndoe2", "email": "johndoe2@mail.com", "password": "12346" }' http://localhost:3000/api/users
+                  ```
+                  </span>
+              </li>
+              <li>Lihat hasilnya</li>
+            </ol>
+        </TabItem>
+
+      </Tabs>
+
+1.  Bila berhasil (terjadi error), maka kita akan mendapatkan response dengan status code `400` atau `500` dan error yang dilakukan sudah dikarenakan validasi yang tidak sesuai dari `zod`.
+
+Nah sampai di sini, artinya untuk route handler ini kita sudah selesai membuatnya nih, dan sudah dilengkapi dengan validasi input menggunakan `zod`.
+
+Sudah makin mantap jadi developer NextJS yang menggunakan v15 bukan?
