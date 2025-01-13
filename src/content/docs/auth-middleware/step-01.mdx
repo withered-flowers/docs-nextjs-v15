@@ -1,5 +1,95 @@
 ---
-title: Work in Progress
+title: Otentikasi via JSON Web Token
 ---
 
-Work in Progress
+import { FileTree } from "@astrojs/starlight/components";
+
+### Straight to the Point
+
+Jadi langsung saja, tanpa perlu _ba bi bu_ lagi, kita akan langsung untuk memulai demo aplikasi kita.
+
+Di dalam demo ini, kita akan mencoba untuk:
+
+- Mengimplementasikan `Login` dan `Register`
+- Memaksa user untuk login terlebih dahulu sebelum bisa mengakses halaman tertentu (proteksi halaman)
+- Menggunakan `JSON Web Token` sebagai metode otentikasi ke dalam API yang sudah dibuat.
+
+Mari kita mulai !
+
+### Buat fungsi JSON Web Token
+
+Pada langkah ini kita akan mencoba untuk membuat fungsi yang diperuntukkan untuk JSON Web Token, yaitu `membuat token` dan `memverifikasi token`.
+
+JSON Web Token ini umumnya bisa digunakan untuk menyimpan data yang berbentuk JSON yang kemudian akan disembunyikan dalam bentuk sebuah `token`.
+
+`token` ini umumnya akan digunakan dalam proses `otentikasi` ataupun logika keamanan lainnya.
+
+Lebih lanjut mengenai `JSON Web Token` ini bisa dibuka [pada tautan ini yah](https://jwt.io/introduction/).
+
+Untuk membuat token ini, kita akan menggunakan package `jsonwebtoken`.
+
+Yuk kita bikin fungsi JSON Web Token nya, dengan langkah-langkah berikut:
+
+1. Buka folder `src/a-start/client-15`
+1. Install package jsonwebtoken dengan `npm install jsonwebtoken`
+1. Karena kita menggunakan TypeScript, maka kita perlu install juga package `@types/jsonwebtoken` dengan `npm install -D @types/jsonwebtoken`.
+
+   :::tip
+   Untuk mengetahui apakah kita memerlukan untuk install `@types/nama-packge`, maka kita perlu:
+
+   - Mengunjungi [https://npmjs.com](https://npmjs.com)
+   - Mencari package yang digunakan, mis. `jsonwebtoken`
+   - Lihat pada halaman dokumentasi package tersebut
+     - Apabila tulisannya adalah `DT` maka perlu untuk pasang package `@types/nama-package`
+     - Apabila tulisannya adalah `TS`, maka tidak perlu untuk pasang package tambahan, karena sudah TypeScript ready
+     - Apabila tidak ada icon `DT` ataupun `TS`, artinya tidak bisa menggunakan TypeScript
+
+   :::
+
+1. Untuk bisa menggunakan JSON Web Token, kita juga membutuhkan sebuah secret key yang aman, oleh karena itu kita akan memodifikasi file `.env` yang sebelumnya sudah dibuka (`client-15/.env`) dan tambahkan dengan sebuah environment variable bernama `JWT_SECRET`
+
+   <FileTree>
+    - sources
+        - a-start
+          - client-15
+              - **.env**
+   </FileTree>
+
+   ```sh
+   # File: .env
+   DB_FILE_NAME=file:belajar.db
+   JWT_SECRET=ini-hanya-untuk-pembelajaran-saja
+   ```
+
+1. Buat sebuah file baru bernama `jwt.ts` di dalam folder `src/a-start/client-15/src/utils` dan isikan dengan kode berikut:
+
+   <FileTree>
+    - sources
+        - a-start
+          - client-15
+              - src
+                - utils
+                  - hash.ts kode yang sebelumnya dibuat
+                  - **jwt.ts**
+   </FileTree>
+
+   ```ts
+   // File: jwt.ts
+   // ?? Import jwt dan JwtPayload dari library jsonwebtoken.
+   import jwt, { type JwtPayload } from "jsonwebtoken";
+
+   // ?? SECRET_KEY akan diambil dari environment variable JWT_SECRET. Jika tidak ada, maka kita akan menggunakan string "this-is-not-a-safe-key".
+   // ?? Kegunaan SECRET_KEY adalah sebagai kunci rahasia yang digunakan untuk mengenkripsi dan mendekripsi token.
+   const SECRET_KEY = process.env.JWT_SECRET || "this-is-not-a-safe-key";
+
+   // ?? Di sini kita menerima payload berupa object (JwtPayload) yang berisi data yang akan disimpan di dalam token.
+   export const createToken = (payload: JwtPayload) =>
+     jwt.sign(payload, SECRET_KEY);
+
+   // ?? Di sini kita menerima token berupa string yang berisi token yang akan dibaca.
+   export const readPayload = (token: string) => jwt.verify(token, SECRET_KEY);
+   ```
+
+Nah sampai pada titik ini artinya logic untuk JSON Web Token sudah selesai dibuat.
+
+Selanjutnya kita akan membuat tampilan untuk `Login` dan `Register`-nya yah !

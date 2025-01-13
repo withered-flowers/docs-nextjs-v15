@@ -1,0 +1,201 @@
+---
+title: Bikin Tampilan Login dan Register
+---
+
+import { FileTree } from "@astrojs/starlight/components";
+
+Pada langkah ini, kita akan membuat tampilan login dan register, masih dalam bentuk tampilan saja, belum ada interaksi apapun.
+
+### Register Page
+
+1. Buat file `src/components/FormRegister.tsx` dan isi filenya menjadi sebagai berikut:
+
+   <FileTree>
+   - src/
+     - animations/
+     - app/
+     - components/
+       - ...
+       - **FormRegister.tsx**
+     - db/
+     - utils/
+       - ...
+       - jwt.ts
+   </FileTree>
+
+   ````tsx
+   // File: FormRegister.tsx
+   const FormRegister = () => {
+     return (
+       <form className="flex min-w-[25vw] flex-col gap-2">
+         <h1 className="text-center text-3xl font-semibold text-slate-700">
+           Register Page
+         </h1>
+         <input
+           className="rounded px-4 py-2 border border-blue-300"
+           type="text"
+           id="username"
+           name="username"
+           placeholder="Username"
+         />
+         <input
+           className="rounded px-4 py-2 border border-blue-300"
+           type="email"
+           id="email"
+           name="email"
+           placeholder="Email"
+         />
+         <input
+           className="rounded px-4 py-2 border border-blue-300"
+           type="password"
+           id="password"
+           name="password"
+           placeholder="Password"
+         />
+         <button
+           type="submit"
+           className="rounded bg-emerald-300 px-4 py-2 transition-colors duration-300 hover:bg-emerald-500 hover:text-white/90"
+         >
+           Register
+         </button>
+       </form>
+     );
+   };
+
+   export default FormRegister;
+   ```
+
+   File ini berfungsi sebagai form register yang akan digunakan pada halaman register.
+
+   ````
+
+1. Buat file `src/app/register/page.tsx` dan isi filenya menjadi sebagai berikut:
+
+   <FileTree>
+   - src/
+     - animations/
+     - app/
+       - ...
+       - register/
+         - **page.tsx**
+     - components/
+       - ...
+       - FormRegister.tsx
+     - db/
+     - utils/
+       - ...
+       - jwt.ts
+   </FileTree>
+
+   ```tsx
+   // File: page.tsx
+   ```
+
+   File ini berfungsi sebagai halaman register, yang akan menampilkan form register yang sudah kita buat sebelumnya.
+
+### Login Page
+
+1. Buat file `src/components/FormRegister.tsx` dan isi filenya menjadi sebagai berikut:
+
+   <FileTree>
+   - src/
+     - animations/
+     - app/
+       - ...
+       - register/
+         - page.tsx
+     - components/
+       - ...
+       - FormRegister.tsx
+       - **FormLogin.tsx**
+     - db/
+     - utils/
+       - ...
+       - jwt.ts
+   </FileTree>
+
+   ```tsx
+   // File: FormLogin.tsx
+   const FormLogin = () => {
+     return (
+       <form className="flex min-w-[25vw] flex-col gap-2">
+         <h1 className="text-center text-3xl font-semibold text-slate-700">
+           Login Page
+         </h1>
+         <input
+           className="rounded px-4 py-2 border border-blue-300"
+           type="email"
+           id="email"
+           name="email"
+           placeholder="Email"
+         />
+         <input
+           className="rounded px-4 py-2 border border-blue-300"
+           type="password"
+           id="password"
+           name="password"
+           placeholder="Password"
+         />
+         <button
+           type="submit"
+           className="rounded bg-emerald-300 px-4 py-2 transition-colors duration-300 hover:bg-emerald-500 hover:text-white/90"
+         >
+           Register
+         </button>
+       </form>
+     );
+   };
+
+   export default FormLogin;
+   ```
+
+   File ini berfungsi sebagai form login yang akan digunakan pada halaman login.
+
+1. Buat file `src/app/login/page.tsx` dan isi filenya menjadi sebagai berikut:
+
+   <FileTree>
+   - src/
+     - animations/
+     - app/
+       - ...
+       - login/
+          - **page.tsx**
+       - register/
+         - page.tsx
+     - components/
+       - ...
+       - FormRegister.tsx
+       - FormLogin.tsx
+     - db/
+     - utils/
+       - ...
+       - jwt.ts
+   </FileTree>
+
+   ```tsx
+   // File: page.tsx
+   // ?? Import Form Login yang dibuat
+   import FormLogin from "@/components/FormLogin";
+   import Link from "next/link";
+
+   const LoginPage = () => {
+     return (
+       <section className="flex h-screen w-full flex-col items-center justify-center gap-4">
+         {/* // ?? Gunakan Component FormLogin di sini */}
+         <FormLogin />
+         <Link
+           href="/register"
+           className="text-blue-400 underline underline-offset-4 transition-colors duration-300 hover:text-blue-600"
+         >
+           or do you want to register ... ?
+         </Link>
+       </section>
+     );
+   };
+
+   export default LoginPage;
+   ```
+
+   File ini berfungsi sebagai halaman login, yang akan menampilkan form login yang sudah kita buat sebelumnya.
+
+Sampai pada titik ini, kita sudah membuat tampilan untuk halaman login dan register. Selanjutnya kita akan membuat logic untuk menghandle form tersebut.

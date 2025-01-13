@@ -1,0 +1,334 @@
+---
+title: Implementasi Register
+---
+
+import { FileTree } from "@astrojs/starlight/components";
+
+### Mari bikin /register
+
+Pada langkah ini kita akan mencoba untuk mengimplementasikan register dengan menggunakan suatu `server actions` yang akan mengirimkan form input ke route handler yang sudah disiapkan, yaitu `POST /api/users` dan akan melakukan:
+
+- [BERHASIL] Redirect ke halaman `/login` bila register berhasil
+- [GAGAL] Menampilkan pesan error bila register gagal
+
+:::caution
+Pada langkah ini kita akan menggunakan cara yang sebenarnya secara NextJS itu **kurang tepat**, tapi masih banyak dilakukan oleh developer, yang baru mempelajari NextJS (`App Router`)
+
+Apakah langkah yang kurang tepat itu? Nah coba dianalisis berdasarkan langkah-langkah yang dilakukan berikut yah !
+:::
+
+Adapun langkah-langkahnya adalah sebagai berikut:
+
+1. Buat file `src/services/register.ts` dan isi filenya menjadi sebagai berikut:
+
+   <FileTree>
+   - src/
+     - animations/
+     - app/
+       - ...
+       - login/
+          - page.tsx
+       - register/
+         - page.tsx
+     - components/
+       - ...
+       - FormRegister.tsx
+       - FormLogin.tsx
+     - db/
+     - services/
+       - **register.ts**
+     - utils/
+       - ...
+       - jwt.ts
+   </FileTree>
+
+   ```ts
+   // File: register.ts
+   // ?? Import Custom Type Response yang dibuat sebelumnya
+   import type { MyResponse } from "@/app/api/types";
+   import { redirect } from "next/navigation";
+
+   export const SERVER_BASE_URL = "http://localhost:3000";
+
+   // ?? Kita akan membuat suatu "server actions" untuk menghandle register.
+   // ?? "server actions" ini akan melakukan fetch ke backend, dan melakukan redirect ke "/login" apabila berhasil melakukan register. Apabila gagal pada saat fetch ke backend dan diberikan kembalian berupa error, maka kita akan redirect ke halaman register dengan URLSearchParams yang berisi error-nya.
+   export const serverActionHandleRegister = async (data: FormData) => {
+     "use server";
+
+     // ?? Ambil data dari form
+     const username = data.get("username");
+     const email = data.get("email");
+     const password = data.get("password");
+
+     // ?? Di sini kita akan menembak ke Route Handler "POST - /api/users"
+     const response = await fetch(`${SERVER_BASE_URL}/api/users`, {
+       method: "POST",
+       // ?? Karena backendnya menerima tipe data "json" (lihat function POST pada /src/app/api/users/route.ts), maka kita harus mengirimkan bodynya dalam bentuk json juga.
+       // ?? Cara untuk mengirimkan JSON adalah dengan:
+       // ?? - kirim body dalam bentuk STRING dari json (JSON.stringify)
+       // ?? - berikan headers Content-Type berupa json (application/json)
+       body: JSON.stringify({
+         username,
+         email,
+         password,
+       }),
+       headers: {
+         "Content-Type": "application/json",
+       },
+     });
+
+     const responseJson: MyResponse<unknown> = await response.json();
+
+     // !! WARNING: Bila menggunakan redirect, tidak boleh menggunakan try-catch block. Hal ini dikarenakan di dalam NextJS, redirect akan meng-throw error bernama "NEXT_REDIRECT"
+     if (!response.ok) {
+       const message = responseJson.error ?? "Something went wrong!";
+
+       // ?? Harapannya di sini adalah ketika ada error, maka kita akan redirect ke halaman register dengan URLSearchParams dengan key "error" yang berisi pesan errornya, dengan asumsi bahwa error SELALU string
+       return redirect(`/register?error=${message}`);
+     }
+
+     // ?? Setelah berhasil melakukan register, maka kita redirect ke halaman login
+     return redirect("/login");
+   };
+   ```
+
+   File ini berfungsi sebagai `server actions` yang akan mengirimkan form input ke route handler yang sudah disiapkan, yaitu `POST /api/register`.
+
+1. Sampai di sini, sekarang kita akan menemukan sebuah masalah yang baru:
+
+   > **Bagaimana cara kita membaca error yang terjadi pada saat register gagal?**
+
+   Nah, untuk menangani hal tersebut, kita akan menggunakan `URLSearchParams` yang akan membaca query parameter yang ada pada URL.
+
+   Pada NextJS ini, kita bisa menggunakan `useSearchParams`.
+
+   Masalah baru pun muncul lagi (_walah, masalah di dalam masalah_):
+
+   > **Bagaimana cara kita menggunakan `useSearchParams` pada `server actions`?**
+
+   Dan jawabannya adalah: **TIDAK BISA**, karena `useSearchParams` hanya bisa digunakan pada `Client Component`.
+
+   Wah berarti, apakah kita harus mengubah Form Register kita menjadi `Client Component`? **TIDAK PERLU**.
+
+   Kita cukup dengan membuat sebuah component baru yang akan menghandle error pada saat register gagal.
+
+1. Buat file `src/components/FlashComponent.tsx` dan isi filenya menjadi sebagai berikut:
+
+   <FileTree>
+   - src/
+     - animations/
+     - app/
+       - ...
+       - login/
+          - page.tsx
+       - register/
+         - page.tsx
+     - components/
+       - ...
+       - **FlashComponent.tsx**
+       - FormRegister.tsx
+       - FormLogin.tsx
+     - db/
+     - services/
+       - register.ts
+     - utils/
+       - ...
+       - jwt.ts
+   </FileTree>
+
+   ```tsx
+   // File: FlashComponent.tsx
+   // ?? Karena di sini kita akan menggunakan hooks useSearchParams, kita harus menggunakan Client Component
+   "use client";
+
+   // ?? Import useSearchParams
+   import { useSearchParams } from "next/navigation";
+
+   const FlashComponent = () => {
+     // ?? Ingat: Hooks hanya boleh digunakan di dalam functional component
+     const searchParams = useSearchParams();
+
+     // ?? Ambil error message dari URLSearchParams
+     // ?? Asumsi: error message di dalam URLSearchParams bernama "error"
+     const errorMessage = searchParams.get("error");
+
+     return (
+       <>
+         {/* // ?? Render Component hanya bila errorMessage ada */}
+         {errorMessage && (
+           <p className="animate-pulse rounded bg-red-400 px-4 py-2 text-center text-white">
+             {errorMessage}
+           </p>
+         )}
+       </>
+     );
+   };
+
+   export default FlashComponent;
+   ```
+
+   File ini berfungsi sebagai component yang akan menampilkan pesan error pada saat register (atau halaman lainnya) gagal.
+
+   - Selama URLSearchParams dengan key `error` ada, maka component ini akan merender pesan error tersebut.
+
+1. Modif file `FormRegister.tsx` untuk menggunakan `server actions` yang sudah kita buat.
+
+   <FileTree>
+   - src/
+     - animations/
+     - app/
+       - ...
+       - login/
+          - page.tsx
+       - register/
+         - page.tsx
+     - components/
+       - ...
+       - FlashComponent.tsx
+       - **FormRegister.tsx**
+       - FormLogin.tsx
+     - db/
+     - services/
+       - register.ts
+     - utils/
+       - ...
+       - jwt.ts
+   </FileTree>
+
+   :::note
+   Perhatikan comment dengan awalan `Step 3.x - <Penjelasan>`
+   :::
+
+   ```tsx
+   // File: FormRegister.tsx
+   // ?? Step 3.1 - Import logic server actions
+   import { serverActionHandleRegister } from "@/services/register";
+
+   const FormRegister = () => {
+     return (
+       <form
+         // ?? Step 3.2 - Gunakan serverActionHandleRegister sebagai action dari form
+         action={serverActionHandleRegister}
+         className="flex min-w-[25vw] flex-col gap-2"
+       >
+         <h1 className="text-center text-3xl font-semibold text-slate-700">
+           Register Page
+         </h1>
+         <input
+           className="rounded px-4 py-2 border border-blue-300"
+           type="text"
+           id="username"
+           name="username"
+           placeholder="Username"
+         />
+         <input
+           className="rounded px-4 py-2 border border-blue-300"
+           type="email"
+           id="email"
+           name="email"
+           placeholder="Email"
+         />
+         <input
+           className="rounded px-4 py-2 border border-blue-300"
+           type="password"
+           id="password"
+           name="password"
+           placeholder="Password"
+         />
+         <button
+           type="submit"
+           className="rounded bg-emerald-300 px-4 py-2 transition-colors duration-300 hover:bg-emerald-500 hover:text-white/90"
+         >
+           Register
+         </button>
+       </form>
+     );
+   };
+
+   export default FormRegister;
+   ```
+
+1. Modif file `page.tsx` pada folder `src/app/register` (`src/app/register/page.tsx` jadi seperti berikut:
+
+   <FileTree>
+   - src/
+     - animations/
+     - app/
+       - ...
+       - login/
+          - page.tsx
+       - register/
+         - **page.tsx**
+     - components/
+       - ...
+       - FlashComponent.tsx
+       - FormRegister.tsx
+       - FormLogin.tsx
+     - db/
+     - services/
+       - register.ts
+     - utils/
+       - ...
+       - jwt.ts
+   </FileTree>
+
+   :::note
+   Perhatikan comment dengan awalan `Step 3.x - <Penjelasan>`
+   :::
+
+   ```tsx
+   // File: page.tsx
+   // ?? Step 3.3 - Import Form Register yang dibuat
+   import FlashComponent from "@/components/FlashComponent";
+   import FormRegister from "@/components/FormRegister";
+   import Link from "next/link";
+
+   const RegisterPage = () => {
+     return (
+       <section className="flex h-screen w-full flex-col items-center justify-center gap-4">
+         {/* // ?? Step 3.4 Gunakan FlashComponent di sini */}
+         <FlashComponent />
+         {/* // ?? Gunakan Component FormRegister di sini */}
+         <FormRegister />
+         <Link
+           href="/login"
+           className="text-blue-400 underline underline-offset-4 transition-colors duration-300 hover:text-blue-600"
+         >
+           or do you want to login ... ?
+         </Link>
+       </section>
+     );
+   };
+
+   export default RegisterPage;
+   ```
+
+1. Buka halaman `/register` dan coba lakukan register dengan data yang valid dan tidak valid.
+
+   - Bila register berhasil, maka akan redirect ke halaman `/login`
+   - Bila register gagal, maka akan muncul pesan error pada halaman `/register`
+
+Sampai di sini, kita sudah berhasil membuat halaman register yang bisa melakukan register dengan menggunakan `server actions` yang akan mengirimkan form input ke route handler yang sudah disiapkan, yaitu `POST /api/users`.
+
+:::caution
+Nah, sampai di sini apakah sudah tau letak keanehannya pada langkah-langkah yang kita lakukan?
+
+Ya, keanehannya adalah kita menggunakan route handler `POST /api/users` untuk melakukan register, di mana form-nya menggunakan `server actions`.
+
+Ibaratnya adalah:
+- Kita memiliki sebuah fungsi yang hanya berjalan di server saja (`server actions`), tapi kita gunakan untuk menembak server kita kita sendiri (`route handler - POST /api/users`). 
+
+TL;DR: 
+> **Server kok nembak ke dirinya sendiri?**
+
+Hal ini sebenarnya umum dilakukan pada aplikasi `React` yang umumnya memiliki backend yang terpisah dari frontend-nya.
+
+Hanya saja sekarang ini kita sedang menggunakan NextJS, yang sebenarnya sudah menjadi full-stack.
+
+Sehingga solusi yang tepat adalah dengan:
+> **Langsung menggunakan `server actions` yang menembak ke database kita, tanpa harus melewati route handler !**
+
+~~_Loh kok balik kayak versi `monolitik` yah?_ 🙃~~
+
+Nah kita akan mencoba untuk membuat hal ini pada saat mengimplementasikan si Login nanti yah !
+:::

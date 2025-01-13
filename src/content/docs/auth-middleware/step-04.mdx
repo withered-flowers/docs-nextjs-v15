@@ -1,0 +1,158 @@
+---
+title: Implementasi Login
+---
+
+import { FileTree } from "@astrojs/starlight/components";
+
+### Mari bikin /login
+
+Pada langkah ini kita akan mencoba untuk mengimplementasikan login dengan menggunakan suatu `server actions` yang akan mengirimkan form input dan langsung mengecek via database secara direct.
+
+- [BERHASIL] Redirect ke halaman `/dashboard/jokes` bila login berhasil
+- [GAGAL] Menampilkan pesan error bila login gagal
+
+:::caution
+Pada langkah ini kita akan menggunakan cara yang direkomendasikan dari NextJS dalam menghandle form di `App Router`.
+
+Cara ini tentunya akan sedikit aneh bagi para developer yang memegang bahasa lainnya (e.g. PHP, Python, etc).
+
+Bare with it yah, karena ini adalah cara yang direkomendasikan oleh Lee Robinson (pengembang NextJS) sendiri.
+:::
+
+Adapun langkah-langkahnya adalah sebagai berikut:
+
+1. Buat file `src/services/login.ts` dan isi filenya menjadi sebagai berikut:
+
+   <FileTree>
+   - src/
+     - animations/
+     - app/
+       - ...
+       - login/
+          - page.tsx
+       - register/
+         - page.tsx
+     - components/
+       - ...
+       - FlashComponent.tsx
+       - FormRegister.tsx
+       - FormLogin.tsx
+     - db/
+     - services/
+       - **login.ts**
+       - register.ts
+     - utils/
+       - ...
+       - jwt.ts
+   </FileTree>
+
+   :::caution
+   Baca baik-baik comment yang ada di dalam file ini untuk mengerti lebih lanjut mengenai apa yang dilakukan.
+   :::
+
+   ```ts
+   // File: login.ts
+   // ?? Berbeda dari Register yang digunakan dari Server Component, Login ini kita akan menggunakan form dalam bentuk Client Component.
+   // ?? Syarat untuk menggunakan Server Action di dalam Client Component:
+   // ?? - Harus memanggil action yang ada di file yang terpisah
+   // ?? - Pada file yang terpisah, harus menggunakan directive "use server" di awal file
+   "use server";
+
+   // ?? Berbeda dengan Register, di sini kita tidak import MyResponse karena kita tidak akan melakukan fetch ke backend kita sendiri !
+   import { getUserByEmail } from "@/db/models/user";
+   import { verifyHash } from "@/utils/hash";
+   import { redirect } from "next/navigation";
+   import { z } from "zod";
+
+   // ?? Di sini kita akan membuat tipe data yang akan digunakan untuk menghandle login
+   type ActionFormData = {
+     email: string;
+     password: string;
+   };
+
+   // ?? Di sini kita membuat tipe data kembalian dari ServerAction
+   export type ActionResponse = {
+     success: boolean;
+     message: string;
+     error?: {
+       // ?? Error yang diberikan dari zod bisa berupa array,
+       // ?? Karena satu field bisa memiliki lebih dari satu error
+       [K in keyof ActionFormData]?: string[];
+     };
+     // ?? Input ini akan digunakan untuk mengembalikan data yang diterima dari client (form)
+     // ?? digunakan untuk mengisi kembali form apabila terjadi error
+     input?: ActionFormData;
+   };
+
+   // ?? Di sini kita akan membuat schema validasi input via zod
+   const LoginUserSchema = z.object({
+     // ?? Email wajib diisi dan harus berformat email
+     email: z.string().email({
+       message: "Email tidak valid",
+     }),
+     // ?? Karena ini keperluan login, maka password wajib diisi
+     // ?? Misalnya di sini kita berbaik hati untuk memberikan info password minimal 6 karakter
+     // !! WARNING: Don't do this on prod !
+     password: z.string().min(6, {
+       message: "Password minimal 6 karakter",
+     }),
+   });
+
+   // ?? Kita akan membuat suat "action" untuk menghandle login.
+   // ?? "action" ini akan melakukan call ke database, memeriksa apakah user dengan username dan password yang diberikan ada di database atau tidak. Apabila gagal, maka kita akan berikan pesan error "Invalid credentials", apabila berhasil, maka kita akan redirect ke halaman "/dashboard".
+
+   // ?? Berbeda dengan action yang sebelumnya yang hanya memerlukan payload (data) dari form saja, karena di sini kita akan menggunakan Client Component untuk menghandle action via hooks, maka kita memerlukan 2 parameter di dalam server action ini, yaitu:
+   // ?? - prevState = state sebelumnya, bisa berupa ActionResponse atau belum ada (null)
+   // ?? - payload = data yang diterima dari form, berupa FormData
+   export const serverActionLoginHandler = async (
+     _stateSebelumnya: ActionResponse | null,
+     payload: FormData
+   ): Promise<ActionResponse> => {
+     // ?? Ambil data dari form, kita jadikan sebagai string
+     const rawData: ActionFormData = {
+       email: payload.get("email") as string,
+       password: payload.get("password") as string,
+     };
+
+     // ?? Validasi data yang diterima dari client
+     // ?? Di sini kita juga masih akan menggunakan safeParse
+     const parsedData = LoginUserSchema.safeParse(rawData);
+
+     // ?? Di sini kita akan melakukan pengecekan apakah data yang diterima valid atau tidak
+     if (!parsedData.success) {
+       // ?? Di sini kita akan mengembalikan data ketika terjadi error
+       return {
+         success: false,
+         message: "Please check your input",
+         // ?? Kita akan mengembalikan error yang diberikan oleh zod yang berupa fieldErrors
+         error: parsedData.error.flatten().fieldErrors,
+         // ?? Karena ini adalah error yang "sederhana" (password minimal 6 karakter), maka kita akan mengembalikan input yang diterima dari client, supaya form bisa diisi kembali.
+         input: rawData,
+       };
+     }
+
+     // ?? Di sini kita akan membuat logic yang digunakan untuk login
+     // ?? Memeriksa apakah user dengan email yang diberikan ada di database atau tidak
+     const foundUser = await getUserByEmail(parsedData.data.email);
+
+     if (
+       !foundUser ||
+       !verifyHash(parsedData.data.password, foundUser.password)
+     ) {
+       return {
+         success: false,
+         message: "Invalid credentials",
+         // ?? Karena ini adalah error yang berat (salah username / password), maka kita tidak akan mengembalikan input yang diterima dari client
+       };
+     }
+
+     // ?? Apabila berhasil, maka kita akan redirect ke halaman "/dashboard"
+     redirect("/dashboard");
+   };
+   ```
+
+1. Modifikasi file `src/app/login/page.tsx` menjadi sebagai berikut:
+
+   ```tsx
+   // File: page.tsx
+   ```

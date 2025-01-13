@@ -1,0 +1,52 @@
+---
+title: Inisialisasi Proyek
+---
+
+import { FileTree } from "@astrojs/starlight/components";
+
+### Harapan Pembelajaran
+
+Setelah bagian ini selesai, situ diharapkan dapat mengerti tentang:
+
+- Authentication via `JSON Web Token`
+- Penggunaan `middleware` di dalam NextJS
+- PoV (Point of View) penggunaan NextJS dari sisi _developer jadul_ vs _developer yang mengerti NextJS_.
+
+### Clone Aplikasi
+
+```sh
+git clone
+```
+
+### Disclaimer
+
+- Pembelajaran ini akan menggunakan beberapa cara yang unik yang tidak ada di dokumentasi NextJS, namun relevan terhadap developer pada umumnya.
+- Pembelajaran ini bersifat use-case yang berasal dari proyekan, berekspektasilah akan menemukan error yang cukup `wow` dalam pembelajaran ini.
+
+Karena pada pembelajaran ini lebih ke implementasi, maka pembelajaran ini akan mengedepankan demo aplikasi, sehingga lebih minim teori ketimbang yang sebelum-sebelumnya.
+
+### Menyalakan Server
+
+1. cd `/sources/a-start/server`
+1. install package yang dibutuhkan dengan `npm install`
+1. jalankan server dengan `npm run watch`
+
+### Menyalakan client
+
+1. cd `/sources/a-start/client-15`
+1. install package yang dibutuhkan dengan `npm install`
+1. buat file `.env` dan isikan file berikut:
+
+   <FileTree>
+   - sources
+      - a-start
+         - client-15
+            - **.env**
+   </FileTree>
+
+   ```sh
+   # File: .env
+   DB_FILE_NAME=file:belajar.db
+   ```
+
+1. jalankan client dengan `npm run dev`

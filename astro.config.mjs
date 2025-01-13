@@ -169,8 +169,24 @@ export default defineConfig({
 					label: "Authentication & Middleware (WIP)",
 					items: [
 						{
-							label: "WIP",
+							label: "Step 0 - Inisialisasi Proyek",
+							slug: "auth-middleware/step-00",
+						},
+						{
+							label: "Step 1 - Bikin Logic JSON Web Token",
 							slug: "auth-middleware/step-01",
+						},
+						{
+							label: "Step 2 - Bikin Tampilan Login dan Register",
+							slug: "auth-middleware/step-02",
+						},
+						{
+							label: "Step 3 - Handle Register",
+							slug: "auth-middleware/step-03",
+						},
+						{
+							label: "Step 4 - Handle Login",
+							slug: "auth-middleware/step-04",
 						},
 					],
 				},
