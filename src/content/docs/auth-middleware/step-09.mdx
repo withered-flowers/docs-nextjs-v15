@@ -1,7 +1,44 @@
 ---
-title: Middleware (lagi)? Lebih dalam ...
+title: Middleware (lagi) - Lebih dalam
 ---
 
 import { FileTree } from "@astrojs/starlight/components";
 
 ### Middleware (in-depth)
+
+Seperti yang kita ketahui, middleware ini hanya bisa diletakkan pada satu tempat saja, yaitu `src/middleware.ts`, dan hanya bisa ada 1 file middleware saja.
+
+Bayangkan bila ada banyak middleware yang ingin kita buat, tentu akan sangat `bloated` sekali file middleware ini nantinya kan?
+
+Nah karena itu, tim NextJS menimbang untuk:
+
+- Oke, kita cuma boleh bikin 1 file middleware saja, dan ini harus dibikin "RINGAN".
+
+Sehingga tim NextJS memutuskan untuk:
+
+- Ya sudah, untuk si middleware ini, kita **TIDAK AKAN** pakai `nodejs` yang terkenal cukup berat dan powerful ini, tapi kita akan _strip down_ `nodejs` ini menjadi lebih ringan, dan kita namakan dengan `edge`.
+
+`edge` ini adalah sebuah runtime yang dibuat oleh tim NextJS sendiri, yang mana runtime ini akan memungkinkan kita untuk membuat middleware yang lebih ringan, dan lebih mudah untuk diatur.
+
+Konsekuensinya adalah: 
+> Kita tidak bisa menggunakan semua fitur yang ada di nodejs.
+
+Nah, pada saat menggunakan si `JSON Web Token`, yang menggunakan package `jsonwebtoken`, kita menggunakan fungsi verify di package tersebut,
+
+Yang mana di balik layarnya menggunakan module `crypto` dari `nodejs`, tapi tidak bisa digunakan di `edge`.
+
+Jadi solusinya gimana donk?
+
+_~~Ya jangan pakai JSON Web Token lah, pakai yang lain aja~~_
+
+Coba buka dulu di [tautan ini yah](https://jwt.io/libraries?language=Node.js) dan kita akan diberikan 3 pilihan package:
+
+- `jsonwebtoken` yang dibuat oleh Auth0
+- `jose` yang dibuat oleh Filip Skokan
+- `aws-jwt-verify` yang dibuat oleh Amazon Web Services
+
+`jsonwebtoken` sudah jelas tidak bisa, `aws-jwt-verify` takut terikat pada vendor, sehingga pilihan kita adalah mencoba bereksperimen dengan `jose`.
+
+Bila `jose` juga tidak bisa, artinya, kita tidak bisa menggunakan JWT di middlwarenya NextJS.
+
+_~~Habis itu kita buang NextJS deh~~_ 🙃
