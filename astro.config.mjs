@@ -204,6 +204,10 @@ export default defineConfig({
 							label: "Step 7 - Handle Middleware",
 							slug: "auth-middleware/step-08",
 						},
+						{
+							label: "Step 8 - In Depth - Middleware",
+							slug: "auth-middleware/step-09",
+						},
 					],
 				},
 			],
