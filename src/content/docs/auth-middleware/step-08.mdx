@@ -97,7 +97,7 @@ Langkah-langkah yang akan kita lakukan dalam membuat middleware adalah sebagai b
    :::caution
    Warning:
 
-   **Kode di bawah ini cukup panjang dan banyak komen, mohon dibaca pelan-pelan**
+   **Kode di bawah ini cukup panjang dan banyak komen, jadi dibaca pelan-pelan yah**
    :::
 
    ```ts
@@ -170,3 +170,330 @@ Langkah-langkah yang akan kita lakukan dalam membuat middleware adalah sebagai b
      matcher: ["/api/:path*"],
    } satisfies MiddlewareConfig;
    ```
+
+5. Selanjutnya sebagai pembuktian saja, kita akan mencoba untuk menambahkan `console.log` pada `route handler` yang ada di `/api/users` (`src/app/api/users.ts`).
+
+   <FileTree>
+   - src/
+     - animations/
+     - app/
+       - ...
+       - api/
+          - users
+            - **route.ts**
+       - login/
+          - page.tsx
+       - register/
+         - page.tsx
+     - components/
+       - ...
+       - DashboardSidebar.tsx
+       - FlashComponent.tsx
+       - FormRegister.tsx
+       - FormLogin.tsx
+     - db/
+     - services/
+       - login.ts
+       - register.ts
+     - utils/
+       - ...
+       - jwt.ts
+     - middleware.ts
+   </FileTree>
+
+   :::tip
+   Perhatikan comment dengan awalan `Step 7o.x - <Penjelasan>`
+
+   (Hanya modif di function `GET` saja)
+   :::
+
+   ```ts
+   // File: route.ts
+   import { NextResponse } from "next/server";
+   import { getUsers } from "@/db/models/user";
+   import { createUser } from "@/db/models/user";
+   import type { NextRequest } from "next/server";
+
+   import type { MyResponse } from "@/app/api/types";
+
+   import { LibsqlError } from "@libsql/client";
+   import { z } from "zod";
+
+   const CreateUserSchema = z.object({
+     username: z.string().nonempty({
+       message: "Username tidak boleh kosong",
+     }),
+     email: z.string().email({
+       message: "Email tidak valid",
+     }),
+     password: z.string().min(6, {
+       message: "Password minimal 6 karakter",
+     }),
+     superuser: z
+       .number()
+       .min(0, {
+         message: "Superuser harus 0 atau 1",
+       })
+       .max(1, {
+         message: "Superuser harus 0 atau 1",
+       })
+       .optional(),
+     original_name: z
+       .string({
+         message: "Nama asli harus berupa string",
+       })
+       .optional(),
+   });
+
+   // !! GET /api/users
+   // ?? Step 7o.1 - Menambahkan request di parameter, karena kita akan baca header
+   export const GET = async (req: NextRequest) => {
+     const users = await getUsers();
+
+     // ?? Step 7o.2 - Kita akan membaca headers yang ada di dalam request
+     console.log("INSIDE GET /api/users");
+     console.log("x-user-id", req.headers.get("x-user-id"));
+     console.log("x-user-email", req.headers.get("x-user-email"));
+     console.log("x-additional-data", req.headers.get("x-additional-data"));
+
+     return NextResponse.json<MyResponse<unknown>>({
+       statusCode: 200,
+       message: "Pong from GET /api/users !",
+       data: users,
+     });
+   };
+
+   export const POST = async (req: NextRequest) => {
+     try {
+       const jsonData = await req.json(); // Perhatikan bahwa jsonData ini adalah "any"
+
+       const parsedData = CreateUserSchema.safeParse(jsonData);
+
+       if (!parsedData.success) {
+         throw parsedData.error;
+       }
+
+       const result = await createUser(parsedData.data);
+
+       return NextResponse.json<MyResponse<unknown>>(
+         {
+           statusCode: 201,
+           data: result,
+         },
+         {
+           status: 201,
+         }
+       );
+     } catch (err) {
+       if (err instanceof z.ZodError) {
+         console.log(err);
+
+         const errPath = err.issues[0].path[0];
+         const errMessage = err.issues[0].message;
+
+         return NextResponse.json<MyResponse<never>>(
+           {
+             statusCode: 400,
+             error: `${errPath} - ${errMessage}`,
+           },
+           {
+             status: 400,
+           }
+         );
+       }
+
+       if (err instanceof LibsqlError) {
+         return NextResponse.json<MyResponse<never>>(
+           {
+             statusCode: 400,
+             error: err.message,
+           },
+           {
+             status: 400,
+           }
+         );
+       }
+
+       console.log(err);
+
+       return NextResponse.json<MyResponse<never>>(
+         {
+           statusCode: 500,
+           message: "Internal Server Error !",
+         },
+         {
+           status: 500,
+         }
+       );
+     }
+   };
+   ```
+
+Sampai di titik ini, seharusnya sih... `middleware`-nya sudah selesai dibuat, hanya saja, sekarang kita belum terlihat pembuktiannya bagaimana kan yah?
+
+Nah untuk itu, kita akan coba untuk modif si `/dashboard` yang kita miliki (`src/app/dashboard/page.tsx`) untuk mencoba apakah bisa menampilkan data user `GET /api/users` di dalam dashboard.
+
+### Modif /dashboard
+
+Mari kita coba untuk menampilkan data user di dalam dashboard kita.
+
+:::danger
+Di sini kita akan mencoba untuk menggunakan Server Component yang akan melakukan fetch ke `GET /api/users` untuk mendapatkan data user.
+
+Sebenarnya ini bukan cara yang cukup baik, kenapa?
+
+Karena di sini artinya kita menembak Route Handler (server-side) dengan menggunakan fetch dari Server Component (server-side juga).
+
+Singkatnya: _**server kok nembak server?**_
+:::
+
+:::caution
+Memang mau tidak mau ini harus dicoba, karena pada akhirnya yang belum bisa _move on_ dari **React** biasa dan **REST API** masih banyak sekali.
+:::
+
+:::note
+Sebenarnya bisa saja membuat aplikasi ini full tanpa route handler, tapi ini akan digunakan sebagai pembelajaran saja yak !
+
+DYOR (Do Your Own Research) untuk menemukan cara yang lebih baik.
+:::
+
+Langkah-langkah yang akan kita lakukan adalah sebagai berikut:
+
+1. Buka file `src/app/dashboard/page.tsx` dan modif filenya menjadi sebagai berikut:
+
+   <FileTree>
+   - src/
+     - animations/
+     - app/
+       - ...
+       - api/
+          - users/
+            - route.ts
+       - dashboard/
+          - **page.tsx**
+       - login/
+          - page.tsx
+       - register/
+         - page.tsx
+     - components/
+       - ...
+       - DashboardSidebar.tsx
+       - FlashComponent.tsx
+       - FormRegister.tsx
+       - FormLogin.tsx
+     - db/
+     - services/
+       - login.ts
+       - register.ts
+     - utils/
+       - ...
+       - jwt.ts
+     - middleware.ts
+   </FileTree>
+
+   :::tip
+   Perhatikan comment dengan awalan `Step 7.x - <Penjelasan>`
+   :::
+
+   ```tsx
+   // File: page.tsx
+
+   import { cookies } from "next/headers";
+
+   // ?? Step 7.1 - Bikin function fetch data user
+   const comotDataUser = async () => {
+     // ?? Function ini akan melakukan fetch ke route handler /api/users
+     // ?? Sambil membawa cookie token yang ada di dalam cookies
+
+     // ?? Di sini kita akan memanggil cookies
+     const cookieStore = await cookies();
+
+     // !! (Tapi karena ini adalah Server Component, dan kita akan menggunakan fetch dari Server Side, ke API, yang sama sama ada di localhost:3000, maka kita perlu memberikan cookie dengan cara yang berbeda dari Client Side)
+     const response = await fetch("http://localhost:3000/api/users", {
+       headers: {
+         Cookie: cookieStore.toString(),
+       },
+       // ?? Apabila ini berasal dari Client Component,
+       // ?? Kita bisa melakukan cara yang normal: credentials: "include"
+       // credentials: "include",
+     });
+     const responseJson = await response.json();
+
+     return responseJson;
+   };
+
+   // ?? Step 7.2 - Jadikan Server Component ini async
+   const DashboardPage = async () => {
+     // ?? Step 7.3 - Panggil function fetch data user
+     const dataUser = await comotDataUser();
+
+     return (
+       <section>
+         <h2 className="text-2xl font-semibold">Dashboard Page</h2>
+         {/* ?? Step 7.4 - Bikin render tampilan hasilnya */}
+         <pre>{JSON.stringify(dataUser, null, 2)}</pre>
+       </section>
+     );
+   };
+
+   export default DashboardPage;
+   ```
+
+1. Selanjutnya kita akan mencoba untuk melakukan login ke dalam aplikasi kita, kemudian kita akan coba untuk melihat apakah data user bisa ditampilkan di dalam dashboard.
+
+   - Buka browser, lalu buka halaman `/login`
+   - Lakukan login dengan username dan password yang sudah dibuat sebelumnya
+   - Setelah berhasil login, kita akan di-redirect ke halaman `/dashboard`
+   - Apakah data user bisa ditampilkan di dalam dashboard?
+
+Dan yang terjadi adalah 😔 _**ERROR**_ 😔
+
+...
+
+Meng-sedih sekali bukan? 🙃
+
+Tapi yah, apa boleh buat, sebagai developer kita tidak boleh menyerah begitu saja.
+
+Yuk kita coba baca errornya:
+
+Error yang seharusnya muncul di browser adalah:
+
+```plaintext
+[ Server ] Error: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+```
+
+Waduh, makin down kita karena errornya hanya begitu saja...
+
+Tapi mari kita coba lihat error apa yang muncul di terminal kita:
+
+- Baca error dari paling pertama error terjadi yah
+
+  **~ Jangan langsung baca dari baris paling bawah ~**, (Nenek, 2025)
+
+:::caution
+Baris error kita mungkin bisa berbeda, tapi intinya adalah kita akan mendapatkan error yang sama.
+:::
+
+```plaintext
+❌ Error: The edge runtime does not support Node.js 'crypto' module.
+Learn More: https://nextjs.org/docs/messages/node-module-in-edge-runtime
+    at readPayload (src/utils/jwt.ts:19:50)
+    at middleware (src/middleware.ts:36:29)
+```
+
+Baru setelah itu di bawahnya ada error yang mirip dengan tampilan browser kita
+
+```plaintext
+❌ SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+    at JSON.parse (<anonymous>)
+    at async comotDataUser (src/app/dashboard/page.tsx:20:22)
+    at async DashboardPage (src/app/dashboard/page.tsx:28:18)
+```
+
+Nah sudah mulai ketemu titik terangnya yah ternyata, errornya adalah yang paling pertama:
+
+> **The edge runtime does not support Node.js 'crypto' module.**
+
+Wah ini maksudnya apa?
+
+Mari kita coba bahas di langkah selanjutnya !
