@@ -136,14 +136,81 @@ Selanjutnya kita akan melakukan konfigurasi untuk bisa menggunakan `drizzle` di 
    });
    ```
 
-### Seeding & Migration Drizzle
+### Migration & Seeding Drizzle
 
-Setelah selesai membuat konfigurasi, selanjutnya kita akan melakukan seeding dan migration untuk membuat tabel yang kita buat sebelumnya.
+Setelah selesai membuat konfigurasi, selanjutnya kita akan melakukan migration dan seeding untuk membuat tabel yang kita buat sebelumnya.
+
+1. Buat file dengan nama `hash.ts` pada folder `src/utils` (`src/utils/hash.ts`).
+
+   Isi dari filenya adalah sebagai berikut:
+
+   ```ts
+   // File: hash.ts
+   import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
+
+   const salt = randomBytes(16).toString("hex");
+
+   export const generateHash = (plaintext: string) => {
+     const key = scryptSync(plaintext, salt, 32);
+
+     return `${salt}:${key.toString("hex")}`;
+   };
+
+   export const verifyHash = (plaintext: string, hash: string) => {
+     const [salt, key] = hash.split(":");
+     const keyBuffer = scryptSync(plaintext, salt, 32);
+
+     return timingSafeEqual(keyBuffer, Buffer.from(key, "hex"));
+   };
+   ```
+
+   File ini akan berisi logic yang digunakan untuk meng-generate hash password yang akan digunakan untuk menyimpan password ke dalam database, dan fungsi yang digunakan untuk melakukan verifikasi password.
+
+1. Buat file dengan nama `seed.ts` pada folder `src/db` (`src/db/seed.ts`) dan isi filenya sebagai berikut:
+
+   ```ts
+   // File: seed.ts
+   import { generateHash } from "@/utils/hash";
+   import { db } from "./config/drizzle";
+   import { UserTable } from "./schemas";
+   import type { TypeUserInsert } from "./schemas/type";
+
+   const seedData: TypeUserInsert[] = [
+     {
+       username: "developer",
+       email: "developer@mail.com",
+       password: generateHash("123456"),
+     },
+     {
+       username: "admin",
+       email: "admin@mail.com",
+       password: generateHash("123456"),
+       superadmin: 1,
+     },
+     {
+       username: "other",
+       email: "other@mail.com",
+       password: generateHash("123456"),
+       original_name: "Just Another",
+     },
+   ];
+
+   (async () => {
+     try {
+       await db.insert(UserTable).values(seedData);
+       console.log("Seed data inserted");
+     } catch (err) {
+       console.error(err);
+     }
+   })();
+   ```
+
+   File ini akan berisi data yang akan di-insert ke dalam table yang di-migrate nanti.
 
 1. Buka terminal
 1. cd ke `sources/a-start/client-15`
-1. Generate file migration dengan perintah `npx drizzle-kit migrate`
-1. Melakukan file migration dengan perintah `npx drizzle-kit migrate:`
+1. Generate file migration dengan perintah `npx drizzle-kit generate`
+1. Melakukan file migration dengan perintah `npx drizzle-kit migrate`
 1. Melakukan seeding dengan perintah `npx tsx ./src/db/seed.ts`
 
 ### Pembuatan models

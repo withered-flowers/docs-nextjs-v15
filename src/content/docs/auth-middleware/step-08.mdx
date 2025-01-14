@@ -1,5 +1,172 @@
 ---
-title: Work in Progress
+title: Implementasi Middleware
 ---
 
-Work in Progress
+import { FileTree } from "@astrojs/starlight/components";
+
+### Mari bikin middleware
+
+Di sini kita akan mencoba untuk membuat middleware dan melakukan `troubleshooting` / `debugging` bila ada error yang terjadi.
+
+`middleware` ini nantinya akan bertugas untuk:
+
+- Memfilter path yang akan dilewati, hanya untuk path `/api/*` saja
+- Khusus untuk `/api/users`, apabila methodnya adalah `POST`, maka tidak akan diperiksa sama sekali (karena ini untuk kebutuhan login).
+- Apabila path nya sesuai, maka kita akan melakukan pengecekan apakah `token` yang dikirimkan valid atau tidak.
+  - Jika valid, maka kita akan membaca token tersebut dan menambahkan data user ke dalam `req` (request).
+  - Jika tidak valid, maka kita akan mengirimkan response `401 Unauthorized`.
+
+:::caution
+Spoiler: `Pasti ada errornya kok !`
+:::
+
+Langkah-langkah yang akan kita lakukan dalam membuat middleware adalah sebagai berikut:
+
+1. Buat file `middleware.ts` pada folder `src/` (`src/middleware.ts`)
+
+   <FileTree>
+   - src/
+     - animations/
+     - app/
+       - ...
+       - login/
+          - page.tsx
+       - register/
+         - page.tsx
+     - components/
+       - ...
+       - DashboardSidebar.tsx
+       - FlashComponent.tsx
+       - FormRegister.tsx
+       - FormLogin.tsx
+     - db/
+     - services/
+       - login.ts
+       - register.ts
+     - utils/
+       - ...
+       - jwt.ts
+     - **middleware.ts**
+   </FileTree>
+
+2. Isi file `middleware.ts` untuk bisa memfilter path yang akan dilewati, via `matcher`, untuk memfilter khusus untuk `/api` saja.
+
+   ```ts
+   // File: middleware.ts
+   import { type MiddlewareConfig } from "next/server";
+
+   export const config = {
+     // ?? Middleware ini akan dijalankan pada semua request yang memiliki path /api
+     matcher: ["/api/:path*"],
+   } satisfies MidlewareConfig;
+   ```
+
+3. Selanjutnya kita akan menambahkan kode untuk memeriksa apakah sedang melewati `POST /api/users`
+
+   Jika iya, maka kita akan langsung "melewati" middleware ini.
+
+   ```ts
+   // File: middleware.ts
+   import {
+     type MiddlewareConfig,
+     type NextRequest,
+     NextResponse,
+   } from "next/server";
+
+   // ?? Fungsi ini nanti-nya akan dijalankan pada setiap request yang memiliki path /api/
+   // ?? Kecuali jika path-nya adalah /api/users dan methodnya adalah POST
+   export const middleware = async (req: NextRequest) => {
+     // ?? Ini akan dipakai untuk "debug" saja
+     console.log("Pathname:", req.nextUrl.pathname);
+
+     if (req.nextUrl.pathname === "/api/users" && req.method === "POST") {
+       // ?? Apabila path-nya adalah /api/users dan method-nya adalah POST,
+       // ?? Maka kita akan teruskan request saja tanpa ada logic apapun
+       return NextResponse.next();
+     }
+   };
+
+   export const config = {
+     // ?? Middleware ini akan dijalankan pada semua request yang memiliki path /api
+     matcher: ["/api/:path*"],
+   } satisfies MidlewareConfig;
+   ```
+
+4. Selanjutnya kita akan mencoba untuk memeriksa apakah si token sudah ada di dalam cookies, kemudian bila tidak ada kita akan mengembalikan `401 Unauthorized`, bila ada kita akan baca payload, kemudian mem-"validasi"-kan payload, kemudian, memasukkan data tambahan untuk diteruskan ke `route handler`.
+
+   :::caution
+   Warning:
+
+   **Kode di bawah ini cukup panjang dan banyak komen, mohon dibaca pelan-pelan**
+   :::
+
+   ```ts
+   // File: middleware.ts
+   import { cookies } from "next/headers";
+   import {
+     type MiddlewareConfig,
+     type NextRequest,
+     NextResponse,
+   } from "next/server";
+   import type { MyResponse } from "./app/api/types";
+   import { type MyJwtPayload, readPayload } from "./utils/jwt";
+
+   // ?? Fungsi ini nanti-nya akan dijalankan pada setiap request yang memiliki path /api/
+   // ?? Kecuali jika path-nya adalah /api/users dan methodnya adalah POST
+   export const middleware = async (req: NextRequest) => {
+     // ?? Ini akan dipakai untuk "debug" saja
+     console.log("Pathname:", req.nextUrl.pathname);
+
+     if (req.nextUrl.pathname === "/api/users" && req.method === "POST") {
+       // ?? Apabila path-nya adalah /api/users dan method-nya adalah POST,
+       // ?? Maka kita akan teruskan request saja tanpa ada logic apapun
+       return NextResponse.next();
+     }
+
+     // ?? Mari kita mulai membuat logicnya di sini
+     const cookieStore = await cookies();
+     const token = cookieStore.get("token");
+
+     // ?? Jika cookie token tidak ada, maka kita akan mengembalikan response dengan status code 401
+     if (!token) {
+       return NextResponse.json<MyResponse<never>>({
+         statusCode: 401,
+         error: "Unauthorized to access this resource",
+       });
+     }
+
+     // ?? Apabila cookie token ada, maka kita membaca token-nya
+     // ?? Ingat di sini kembalian dari cookieStore.get("token") adalah sebuah Object yang memiliki key "name" dan "value"
+     const payload = readPayload(token.value) as MyJwtPayload;
+
+     // ?? Umumnya setelah ini kita akan melakukan pengecekan apakah token yang ada di dalam cookies itu valid atau tidak, namun karena cookies ini awalnya diberikan dari server, maka kita akan langsung menganggap bahwa token yang ada di dalam cookies itu valid
+     // ?? (Ingat: sudah http-only, secure, dan same-site)
+     // ?? (Walaupun ini umumnya tergantung konsiderasi dari developer, apakah ingin melakukan validasi lagi atau langsung percaya saja dengan token yang ada di dalam cookies)
+
+     // ?? Habis ini umumnya kita akan melakukan penambahan data ke dalam request yang kita miliki (request.user = tokenData),
+     // ?? Tapi di sini kita tidak bisa memiliki data tambahan di dalam request, maka kita akan menggunakan antara cookies ATAU headers
+
+     // ?? Ceritanya di atas kan sudah pakai cookies, nah sekarang kita akan pakai headers
+     // ?? Kita akan menambahkan data payload ke dalam headers
+
+     // !! (Seharusnya kita bisa saja mengakses req.headers untuk bisa menambahkan data payload, TAPI req.headers itu adalah sebuah object yang read-only, jadi kita tidak bisa menambahkan data ke dalam req.headers)
+     // !! (Solusinya adalah kita akan membuat sebuah object baru yang berisi headers yang sudah ada, lalu kita tambahkan data payload ke dalam object tersebut)
+     const newHeaders = new Headers(req.headers);
+
+     // ?? Biasakan untuk data custom di headers menggunakan prefix "x-" (contoh: x-user)
+     newHeaders.set("x-user-id", payload.id.toString());
+     newHeaders.set("x-user-email", payload.email);
+     // ?? Ceritanya ini data tambahan
+     newHeaders.set("x-additional-data", "Hello, World!");
+
+     // ?? Setelah selesai, kita akan melanjutkan response dengan tambahan headers yang baru
+     return NextResponse.next({
+       headers: newHeaders,
+     });
+   };
+
+   export const config = {
+     // ?? Middleware ini akan dijalankan pada semua request yang memiliki path /api/
+     matcher: ["/api/:path*"],
+   } satisfies MiddlewareConfig;
+   ```

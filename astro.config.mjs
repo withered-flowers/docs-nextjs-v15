@@ -188,6 +188,22 @@ export default defineConfig({
 							label: "Step 4 - Handle Login",
 							slug: "auth-middleware/step-04",
 						},
+						{
+							label: "Step 5 - Simpan Data Login",
+							slug: "auth-middleware/step-05",
+						},
+						{
+							label: "Step 6 - Handle Logout",
+							slug: "auth-middleware/step-06",
+						},
+						{
+							label: "Intermezzo - Middleware",
+							slug: "auth-middleware/step-07",
+						},
+						{
+							label: "Step 7 - Handle Middleware",
+							slug: "auth-middleware/step-08",
+						},
 					],
 				},
 			],
