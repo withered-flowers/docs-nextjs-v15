@@ -82,6 +82,10 @@ export default defineConfig({
 					label: "Client & Server Component",
 					items: [
 						{
+							label: "Intro",
+							slug: "client-server/intro",
+						},
+						{
 							label: "Step 0 - Inisialisasi Proyek",
 							slug: "client-server/step-00",
 						},
@@ -132,6 +136,10 @@ export default defineConfig({
 					label: "Route Handler",
 					items: [
 						{
+							label: "Intro",
+							slug: "route-handler/intro",
+						},
+						{
 							label: "Step 0 - Inisialisasi Proyek",
 							slug: "route-handler/step-00",
 						},
@@ -172,6 +180,10 @@ export default defineConfig({
 				{
 					label: "Authentication & Middleware",
 					items: [
+						{
+							label: "Intro",
+							slug: "auth-middleware/intro",
+						},
 						{
 							label: "Step 0 - Inisialisasi Proyek",
 							slug: "auth-middleware/step-00",
