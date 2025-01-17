@@ -17,6 +17,10 @@ export default defineConfig({
 					label: "Introduction",
 					items: [
 						{
+							label: "Intro",
+							slug: "intro/intro",
+						},
+						{
 							label: "Step 0 - Kenalan dengan NextJS",
 							slug: "intro/step-00",
 						},
@@ -78,6 +82,10 @@ export default defineConfig({
 					label: "Client & Server Component",
 					items: [
 						{
+							label: "Intro",
+							slug: "client-server/intro",
+						},
+						{
 							label: "Step 0 - Inisialisasi Proyek",
 							slug: "client-server/step-00",
 						},
@@ -128,6 +136,10 @@ export default defineConfig({
 					label: "Route Handler",
 					items: [
 						{
+							label: "Intro",
+							slug: "route-handler/intro",
+						},
+						{
 							label: "Step 0 - Inisialisasi Proyek",
 							slug: "route-handler/step-00",
 						},
@@ -166,11 +178,63 @@ export default defineConfig({
 					],
 				},
 				{
-					label: "Authentication & Middleware (WIP)",
+					label: "Authentication & Middleware",
 					items: [
 						{
-							label: "WIP",
+							label: "Intro",
+							slug: "auth-middleware/intro",
+						},
+						{
+							label: "Step 0 - Inisialisasi Proyek",
+							slug: "auth-middleware/step-00",
+						},
+						{
+							label: "Step 1 - Bikin Logic JSON Web Token",
 							slug: "auth-middleware/step-01",
+						},
+						{
+							label: "Step 2 - Bikin Tampilan Login dan Register",
+							slug: "auth-middleware/step-02",
+						},
+						{
+							label: "Step 3 - Handle Register",
+							slug: "auth-middleware/step-03",
+						},
+						{
+							label: "Step 4 - Handle Login",
+							slug: "auth-middleware/step-04",
+						},
+						{
+							label: "Step 5 - Simpan Data Login",
+							slug: "auth-middleware/step-05",
+						},
+						{
+							label: "Step 6 - Handle Logout",
+							slug: "auth-middleware/step-06",
+						},
+						{
+							label: "Intermezzo - Middleware",
+							slug: "auth-middleware/step-07",
+						},
+						{
+							label: "Step 7 - Handle Middleware",
+							slug: "auth-middleware/step-08",
+						},
+						{
+							label: "In Depth - Middleware",
+							slug: "auth-middleware/step-09",
+						},
+						{
+							label: "Step 8 - JWT dengan jose",
+							slug: "auth-middleware/step-10",
+						},
+						{
+							label: "Step 9 - Proteksi si Frontend",
+							slug: "auth-middleware/step-11",
+						},
+						{
+							label: "Epilogue",
+							slug: "auth-middleware/epilogue",
 						},
 					],
 				},

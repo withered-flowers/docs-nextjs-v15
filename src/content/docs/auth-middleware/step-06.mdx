@@ -1,0 +1,157 @@
+---
+title: Implementasi Logout
+---
+
+import { FileTree } from "@astrojs/starlight/components";
+
+Di sini kita akan coba untuk implementasi Logout pada `DashboardSidebar` yang akan menghapus `cookies` yang sudah dibuat sebelumnya, dan akan melakukan redirect ke halaman `/login`.
+
+Langkah-langkahnya adalah sebagai berikut:
+
+1. Buka file `DashboardSidebar.tsx` yang ada pada folder `src/components` (`src/components/DashboardSidebar.tsx`) dan modif filenya menjadi sebagai berikut
+
+   <FileTree>
+   - src/
+     - animations/
+     - app/
+       - ...
+       - login/
+          - page.tsx
+       - register/
+         - page.tsx
+     - components/
+       - ...
+       - **DashboardSidebar.tsx**
+       - FlashComponent.tsx
+       - FormRegister.tsx
+       - FormLogin.tsx
+     - db/
+     - services/
+       - login.ts
+       - register.ts
+     - utils/
+       - ...
+       - jwt.ts
+   </FileTree>
+
+   :::tip
+   Perhatikan comment dengan awalan `Step 6.x - <Penjelasan>`
+   :::
+
+   ```tsx
+   // File: DashboardSidebar.tsx
+   import Link from "next/link";
+
+   // ?? Step 6.1 - Import cookies dan redirect
+   import { cookies } from "next/headers";
+   import { redirect } from "next/navigation";
+
+   const DashboardSidebar = () => {
+     return (
+       <aside className="w-64 h-full bg-gray-100 dark:bg-zinc-800/30 p-4">
+         <h2 className="text-2xl font-semibold mb-4">Navigation</h2>
+         {/* Sidebar */}
+         <ul>
+           <li>
+             <Link
+               className="underline text-blue-400 hover:text-blue-600 underline-offset-4 transition-colors duration-300"
+               href="/"
+             >
+               Home
+             </Link>
+           </li>
+           <li>
+             <Link
+               className="underline text-blue-400 hover:text-blue-600 underline-offset-4 transition-colors duration-300"
+               href="/about"
+             >
+               About
+             </Link>
+           </li>
+           <li>
+             <Link
+               className="underline text-blue-400 hover:text-blue-600 underline-offset-4 transition-colors duration-300"
+               href="/dashboard"
+             >
+               Dashboard
+             </Link>
+           </li>
+           <li className="ml-4">
+             <Link
+               className="underline text-blue-400 hover:text-blue-600 underline-offset-4 transition-colors duration-300"
+               href="/dashboard/jokes"
+             >
+               Dashboard - Jokes
+             </Link>
+           </li>
+         </ul>
+
+         {/* // ?? Step 6.2 - Membuat form yang berisi button submit untuk melakuan server action */}
+         <form
+           className="mt-8 text-center"
+           // ?? Karena SideBar ini merupakan Server Component, maka tidak bisa menggunakan onSubmit, oleh karena itu, solusinya adalah menggunakan server action
+           action={async () => {
+             "use server";
+
+             // ?? Menghapus cookie token bila exists
+             const cookieStore = await cookies();
+
+             if (cookieStore.get("token")) {
+               cookieStore.delete("token");
+             }
+
+             // Redirect ke halaman login
+             redirect("/login");
+           }}
+         >
+           <button
+             type="submit"
+             className="rounded bg-blue-200 px-4 py-2 transition-colors duration-300 hover:bg-blue-400 hover:text-white"
+           >
+             Logout
+           </button>
+         </form>
+       </aside>
+     );
+   };
+
+   export default DashboardSidebar;
+   ```
+
+   :::note
+   Intinya di sini kita akan: 
+   - Menggunakan sebuah form yang memiliki sebuah button submit. 
+   - Ketika form disubmit, maka akan memanggil `server action` 
+   - `server action` bisa memanggil `cookies` dan melakukan `delete` pada `token` yang sudah ada. 
+   - Setelah itu, kita akan melakukan `redirect` ke halaman `/login`.
+   :::
+
+   :::caution
+   Sebenarnya ada juga cara lainnya:
+   - Membuat sebuah button yang berupa `Client Component` yang memiliki onClick
+   - Membuat `server action` di file yang terpisah
+   - Memanggil `server action` via `onClick` pada button tersebut.
+   :::
+
+1. Lanjut, kita ke pembuktian, yaitu:
+
+   - Buka browser dan akses `http://localhost:3000/dashboard` (setelah melakukan login)
+   - Klik tombol `Logout`
+
+   Jika berhasil, maka kita akan di-redirect ke halaman `/login`.
+
+   Cek juga pada `DevTools` -> `Application` -> `Cookies`, apakah cookie `token` sudah terhapus?
+
+
+:::danger
+Di titik ini, kita udah berhasil bikin implementasi untuk register, login, dan logout. 
+
+Namun masih ada kelemahannya, yaitu: 
+- Belum bisa batasin halaman tertentu (`Navigation Guard`) hanya bisa diakses oleh user yang sudah login atau yang belum login:
+
+  - User yang sudah melakukan login, tidak bisa masuk ke halaman /login dan /register
+  - User yang belum melakukan login, tidak bisa masuk ke halaman /dashboard dan turunannya
+
+:::
+
+Untuk bisa membuat ini, kita harus mengerti dulu apa itu `middleware` di NextJS ini dulu.

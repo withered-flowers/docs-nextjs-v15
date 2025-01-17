@@ -1,0 +1,340 @@
+---
+title: Implementasi Login
+---
+
+import { FileTree } from "@astrojs/starlight/components";
+
+### Mari bikin /login
+
+Pada langkah ini kita akan mencoba untuk mengimplementasikan login dengan menggunakan suatu `server actions` yang akan mengirimkan form input dan langsung mengecek via database secara direct.
+
+- [BERHASIL] Redirect ke halaman `/dashboard/jokes` bila login berhasil
+- [GAGAL] Menampilkan pesan error bila login gagal
+
+:::caution
+Pada langkah ini kita akan menggunakan cara yang direkomendasikan dari NextJS dalam menghandle form di `App Router`.
+
+Cara ini tentunya akan sedikit aneh bagi para developer yang memegang bahasa lainnya (e.g. PHP, Python, etc).
+
+Bare with it yah, karena ini adalah cara yang direkomendasikan oleh Lee Robinson (pengembang NextJS) sendiri.
+:::
+
+Adapun langkah-langkahnya adalah sebagai berikut:
+
+1. Buat file `src/services/login.ts` dan isi filenya menjadi sebagai berikut:
+
+   <FileTree>
+   - src/
+     - animations/
+     - app/
+       - ...
+       - login/
+          - page.tsx
+       - register/
+         - page.tsx
+     - components/
+       - ...
+       - FlashComponent.tsx
+       - FormRegister.tsx
+       - FormLogin.tsx
+     - db/
+     - services/
+       - **login.ts**
+       - register.ts
+     - utils/
+       - ...
+       - jwt.ts
+   </FileTree>
+
+   :::caution
+   Baca baik-baik comment yang ada di dalam file ini untuk mengerti lebih lanjut mengenai apa yang dilakukan.
+   :::
+
+   :::tip
+   Perhatikan bahwa parameter yang digunakan di dalam Server Action kali ini berbeda dengan yang sebelumnya
+   :::
+
+   ```ts
+   // File: login.ts
+   // ?? Berbeda dari Register yang digunakan dari Server Component, Login ini kita akan menggunakan form dalam bentuk Client Component.
+   // ?? Syarat untuk menggunakan Server Action di dalam Client Component:
+   // ?? - Harus memanggil action yang ada di file yang terpisah
+   // ?? - Pada file yang terpisah, harus menggunakan directive "use server" di awal file
+   "use server";
+
+   // ?? Berbeda dengan Register, di sini kita tidak import MyResponse karena kita tidak akan melakukan fetch ke backend kita sendiri !
+   import { getUserByEmail } from "@/db/models/user";
+   import { verifyHash } from "@/utils/hash";
+   import { redirect } from "next/navigation";
+   import { z } from "zod";
+
+   // ?? Di sini kita akan membuat tipe data yang akan digunakan untuk menghandle login
+   type ActionFormData = {
+     email: string;
+     password: string;
+   };
+
+   // ?? Di sini kita membuat tipe data kembalian dari ServerAction
+   export type ActionResponse = {
+     success: boolean;
+     message: string;
+     error?: {
+       // ?? Error yang diberikan dari zod bisa berupa array,
+       // ?? Karena satu field bisa memiliki lebih dari satu error
+       [K in keyof ActionFormData]?: string[];
+     };
+     // ?? Input ini akan digunakan untuk mengembalikan data yang diterima dari client (form)
+     // ?? digunakan untuk mengisi kembali form apabila terjadi error
+     input?: ActionFormData;
+   };
+
+   // ?? Di sini kita akan membuat schema validasi input via zod
+   const LoginUserSchema = z.object({
+     // ?? Email wajib diisi dan harus berformat email
+     email: z.string().email({
+       message: "Email tidak valid",
+     }),
+     // ?? Karena ini keperluan login, maka password wajib diisi
+     // ?? Misalnya di sini kita berbaik hati untuk memberikan info password minimal 6 karakter
+     // !! WARNING: Don't do this on prod !
+     password: z.string().min(6, {
+       message: "Password minimal 6 karakter",
+     }),
+   });
+
+   // ?? Kita akan membuat suat "action" untuk menghandle login.
+   // ?? "action" ini akan melakukan call ke database, memeriksa apakah user dengan username dan password yang diberikan ada di database atau tidak. Apabila gagal, maka kita akan berikan pesan error "Invalid credentials", apabila berhasil, maka kita akan redirect ke halaman "/dashboard".
+
+   // ?? Berbeda dengan action yang sebelumnya yang hanya memerlukan payload (data) dari form saja, karena di sini kita akan menggunakan Client Component untuk menghandle action via hooks, maka kita memerlukan 2 parameter di dalam server action ini, yaitu:
+   // ?? - prevState = state sebelumnya, bisa berupa ActionResponse atau belum ada (null)
+   // ?? - payload = data yang diterima dari form, berupa FormData
+   export const serverActionLoginHandler = async (
+     _stateSebelumnya: ActionResponse | null,
+     payload: FormData
+   ): Promise<ActionResponse> => {
+     // ?? Ambil data dari form, kita jadikan sebagai string
+     const rawData: ActionFormData = {
+       email: payload.get("email") as string,
+       password: payload.get("password") as string,
+     };
+
+     // ?? Validasi data yang diterima dari client
+     // ?? Di sini kita juga masih akan menggunakan safeParse
+     const parsedData = LoginUserSchema.safeParse(rawData);
+
+     // ?? Di sini kita akan melakukan pengecekan apakah data yang diterima valid atau tidak
+     if (!parsedData.success) {
+       // ?? Di sini kita akan mengembalikan data ketika terjadi error
+       return {
+         success: false,
+         message: "Please check your input",
+         // ?? Kita akan mengembalikan error yang diberikan oleh zod yang berupa fieldErrors
+         error: parsedData.error.flatten().fieldErrors,
+         // ?? Karena ini adalah error yang "sederhana" (password minimal 6 karakter), maka kita akan mengembalikan input yang diterima dari client, supaya form bisa diisi kembali.
+         input: rawData,
+       };
+     }
+
+     // ?? Di sini kita akan membuat logic yang digunakan untuk login
+     // ?? Memeriksa apakah user dengan email yang diberikan ada di database atau tidak
+     const foundUser = await getUserByEmail(parsedData.data.email);
+
+     if (
+       !foundUser ||
+       !verifyHash(parsedData.data.password, foundUser.password)
+     ) {
+       return {
+         success: false,
+         message: "Invalid credentials",
+         // ?? Karena ini adalah error yang berat (salah username / password), maka kita tidak akan mengembalikan input yang diterima dari client
+       };
+     }
+
+     // ?? Apabila berhasil, maka kita akan redirect ke halaman "/dashboard"
+     redirect("/dashboard");
+   };
+   ```
+
+   :::tip
+   Kok parameter untuk `Server Action` nya berbeda dengan yang sebelumnya yah?
+
+   - Hal ini dikarenakan kita menggunakan `Server Action` ini untuk dimasukkan ke dalam hooks pada client nanti yang bernama `useActionState`.
+
+   :::
+
+   :::note
+   Pada file ini sebenarnya terdapat 3 bagian besar:
+
+   - type ActionFormData
+   - type ActionResponse
+   - fungsi serverActionLoginHandler
+
+   `ActionFormData` adalah tipe data yang akan digunakan untuk menghandle data form login.
+
+   `ActionResponse` adalah tipe data yang akan digunakan untuk menghandle state dari server action login, yang akan disharing-kan antara Client Component dengan Server Action.
+
+   `serverActionLoginHandler` adalah `Server Action` yang berfungsi untuk:
+
+   - Menerima data yang berasal dari form
+   - Menerima state (`ActionResponse`) yang sebelumnya yang berasal dari client (jika ada)
+   - Memvalidasikan data yang diterima dari form
+     - Bila terjadi error, maka akan memasukkan error tersebut ke dalam state
+   - Memeriksa apakah user dengan email dan password yang diberikan ada di database atau tidak
+     - Bila tidak ada, maka akan memberikan pesan error yang dimasukkan ke dalam state
+   - Semuanya beres? redirect ke halaman `/dashboard`
+
+   Perhatikan untuk state yang diberikan ini bersifat _sharing_ antara Client Component dengan Server Action.
+
+   Sehingga walaupun action ini bersifat / dijalankan pada server, namun state yang dihasilkan akan dikirimkan kembali ke Client Component, via hasil return !
+   :::
+
+2. Modifikasi file `src/components/FormLogin.tsx` menjadi sebagai berikut:
+
+   <FileTree>
+   - src/
+     - animations/
+     - app/
+       - ...
+       - login/
+          - page.tsx
+       - register/
+         - page.tsx
+     - components/
+       - ...
+       - FlashComponent.tsx
+       - FormRegister.tsx
+       - **FormLogin.tsx**
+     - db/
+     - services/
+       - login.ts
+       - register.ts
+     - utils/
+       - ...
+       - jwt.ts
+   </FileTree>
+
+   :::tip
+   Perhatikan `useActionState` yang dideklarasikan dan digunakan di dalam FormLogin ini.
+   :::
+
+   ```tsx
+   // File: FormLogin.tsx
+   // ?? Untuk form login ini, karena kita akan menggunakan hooks untuk membuat form login yang interaktif, maka kita akan membuatnya menjadi Client Component
+   "use client";
+
+   // ?? Import tipe data ActionResponse dan server action serverActionLoginHandler
+   import {
+     type ActionResponse,
+     serverActionLoginHandler,
+   } from "@/services/login";
+
+   // ?? Import hooks useActionState (hooks baru dari React 19), yang diperlukan untuk menghandle state dari / ke server action
+   import { useActionState } from "react";
+
+   // ?? Di sini kita akan membuat state awal dari form login
+   const initialState: ActionResponse = {
+     success: true,
+     message: "",
+   };
+
+   const FormLogin = () => {
+     // ?? Di sini kita akan menggunakan useActionState untuk menghandle state dari form login
+     // ?? Hooks useActionState ini akan menghandle state dari form login, dan juga akan menghandle action yang akan dijalankan
+     // ?? useActionState akan menerima 2 parameter:
+     // ?? - action: action yang akan dijalankan
+     // ?? - initialState: state awal dari form login
+     // ?? useActionState akan mengembalikan 3 value:
+     // ?? - currentState: state sekarang dari form login
+     // ?? - actionToRun (dispatcher): fungsi action yang akan dijalankan
+     // ??   - (Fungsi yang akan digunakan di dalam action form login)
+     // ?? - isPending: status apakah action sedang berjalan atau tidak
+     // ??   - (Bagus untuk menampilkan loading spinner)
+     // !!   - Pada demo ini, isPending tidak digunakan
+     const [state, actionYangAkanDijalankan] = useActionState(
+       serverActionLoginHandler,
+       initialState
+     );
+
+     return (
+       <form
+         // ?? Di sini kita akan menggunakan action yang dihasilkan dari useActionState
+         action={actionYangAkanDijalankan}
+         className="flex min-w-[25vw] flex-col gap-2"
+       >
+         <h1 className="text-center text-3xl font-semibold text-slate-700">
+           Login Page
+         </h1>
+         <input
+           className="rounded px-4 py-2 border border-blue-300"
+           type="email"
+           id="email"
+           name="email"
+           // ?? Di sini kita akan menggunakan state.input.email untuk mengisi kembali form apabila terjadi error
+           defaultValue={state?.input?.email}
+           placeholder="Email"
+         />
+
+         {/* Di sini kita akan menampikan error zod yang mungkin terjadi untuk si email */}
+         {state?.error?.email && (
+           <p className="rounded text-red-400 py-2 px-4 text-left">
+             {state.error.email[0]}
+           </p>
+         )}
+
+         <input
+           className="rounded px-4 py-2 border border-blue-300"
+           type="password"
+           id="password"
+           name="password"
+           defaultValue={state?.input?.password}
+           placeholder="Password"
+         />
+
+         {/* // ?? Di sini kita akan menampikan error zod yang mungkin terjadi untuk si password */}
+         {state?.error?.password && (
+           <p className="rounded text-red-400 py-2 px-4 text-left">
+             {state.error.password[0]}
+           </p>
+         )}
+
+         <button
+           type="submit"
+           className="rounded bg-emerald-300 px-4 py-2 transition-colors duration-300 hover:bg-emerald-500 hover:text-white/90"
+         >
+           Login
+         </button>
+
+         {/* // ?? Di sini kita akan menampilkan message yang ada ketika terjadi error */}
+         {!state.success && state?.message && (
+           <p className="rounded text-slate-100 py-2 px-4 bg-red-400 animate-pulse text-center">
+             {state.message}
+           </p>
+         )}
+       </form>
+     );
+   };
+
+   export default FormLogin;
+   ```
+
+   :::note
+   TL;DR
+
+   - FormLogin ini akan menggunakan sebuah hooks yang bernama `useActionState`
+     - `useActionState` ini akan digunakan untuk menghandle state dari form login dan juga akan menghandle action yang akan dijalankan
+     - Pada saat mendeklarasikan `useActionState` kita harus memberikan 2 parameter:
+       - Parameter 1 adalah action yang akan dijalankan
+       - Parameter 2 adalah state awal dari form
+   - Pada saat form menggunakan action (`dispatch action`), action yang digunakan adalah action yang dihasilkan dari `useActionState`.
+   - Via `useActionState` ini maka kita akan bisa memiliki state yang di-sharing antara Client Component dengan Server Action.
+
+   Dan akhirnya, form kita bisa bersifat interaktif _dhe_ !
+   :::
+
+Wuih, cukup panjang yah penjelasannya, dan tekniknya jadi cukup berbeda dengan yang sebelumnya yah?
+
+Tenang, ini masih belum selesai kok, karena masih ada sedikit pertanyaan.
+
+> **Bagaimana cara kita menyimpan data orang yang sudah login ini?**
+
+Nah, pertanyaan itu akan kita jawab di langkah selanjutnya.

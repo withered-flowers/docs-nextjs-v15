@@ -1,0 +1,181 @@
+---
+title: Handle Proteksi Navigasi
+---
+
+import { FileTree } from "@astrojs/starlight/components";
+
+### Navigation Guard
+
+Pada langkah ini kita akan membuat proteksi navigasi di tampilan NextJS kita.
+
+~~_Yuk sebentar lagi selesai nih !_~~
+
+> Caranya bagaimana yah untuk melakukan ini?
+
+Karena kita berbasis pada `token` yang ada di `cookie`, maka kita cukup melakukan pengecekan `token` di halaman yang kita buat.
+
+:::note
+Di sini kita berasumsi bahwa hanya halaman dashboard dan turunannya saja yang butuh untuk dilakukan proteksi yah.
+
+Berarti kita harus buatnya di:
+
+- `/dashboard/page.tsx`
+- `/dashboard/jokes/page.tsx`
+- `/dashboard/jokes/[id]/page.tsx`
+
+:::
+
+Nah karena yang harus dibuat ada di beberapa tempat yang mana merupakan turunan dari `/dashboard`, maka kita akan membuat logic untuk proteksinya di `layout.tsx` (`src/app/dashboard/layout.tsx`)
+
+Tapi karena itu merupakan file khusus untuk tampilan (dan jarang ada logic), maka untuk logic proteksi tersebut, akan kita alihkan dalam sebuah component.
+
+Sebut saja nama componentnya adalah `NavigationGuarder.tsx`
+
+Oke, sudah cukup penjelasannya, mari kita mulai membuatnya dengan langkah-langkah sebagai berikut:
+
+1. Buat component `NavigationGuarder.tsx` di dalam folder `src/components/` (`src/components/NavigationGuarders.tsx`) dan isi filenya sebagai berikut:
+
+   <FileTree>
+   - src/
+     - animations/
+     - app/
+       - ...
+       - api/
+          - users/
+            - route.ts
+       - dashboard/
+          - page.tsx
+       - login/
+          - page.tsx
+       - register/
+         - page.tsx
+     - components/
+       - ...
+       - DashboardSidebar.tsx
+       - FlashComponent.tsx
+       - FormRegister.tsx
+       - FormLogin.tsx
+       - **NavigationGuarder.tsx**
+     - db/
+     - services/
+       - login.ts
+       - register.ts
+     - utils/
+       - ...
+       - jwt.ts
+     - middleware.ts
+   </FileTree>
+
+   ```tsx
+   // File: NavigationGuarder.tsx
+   // !! Jangan dibuat sebagai Client Component, karena kita perlu membaca cookie
+   import type { PropsWithChildren } from "react";
+
+   // ?? Import cookies dari next/headers
+   import { cookies } from "next/headers";
+
+   // ?? Import redirect dari next/navigation
+   import { redirect } from "next/navigation";
+
+   const NavigationGuarder = async ({ children }: PropsWithChildren) => {
+     // ?? Kita akan membaca cookie token
+     const cookieStore = await cookies();
+     const token = cookieStore.get("token");
+
+     // ?? Jika cookie token tidak ada, maka kita akan mengembalikan ke halaman login
+     if (!token || token.value.length <= 0) {
+       redirect("/login");
+     }
+
+     // ?? Jika cookie token ada, maka kita akan me-render children
+     return <>{children}</>;
+   };
+
+   export default NavigationGuarder;
+   ```
+
+1. Modif file `layout.tsx` pada `src/app/dashboard` (`src/app/dashboard/layout.tsx`) menjadi sebagai berikut:
+
+   <FileTree>
+   - src/
+     - animations/
+     - app/
+       - ...
+       - api/
+          - users/
+            - route.ts
+       - dashboard/
+          - **layout.tsx**
+          - page.tsx
+       - login/
+          - page.tsx
+       - register/
+         - page.tsx
+     - components/
+       - ...
+       - DashboardSidebar.tsx
+       - FlashComponent.tsx
+       - FormRegister.tsx
+       - FormLogin.tsx
+       - NavigationGuarder.tsx
+     - db/
+     - services/
+       - login.ts
+       - register.ts
+     - utils/
+       - ...
+       - jwt.ts
+     - middleware.ts
+   </FileTree>
+
+   ```tsx
+   // File: layout.tsx
+   import DashboardSidebar from "@/components/DashboardSidebar";
+
+   // ?? Import NavigationGuarder
+   import NavigationGuarder from "@/components/NavigationGuarder";
+
+   const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
+     return (
+       // ?? Gunakan NavigationGuarder
+       <NavigationGuarder>
+         <section className="w-full min-h-screen flex">
+           <DashboardSidebar />
+
+           <main className="w-full h-full bg-white dark:bg-zinc-900/30 p-4">
+             {children}
+           </main>
+         </section>
+       </NavigationGuarder>
+     );
+   };
+
+   export default DashboardLayout;
+   ```
+
+1. Nah sekarang tinggal kita buktikan saja nih:
+   - Buka halaman `/dashboard` di browser, dan logout terlebih dahulu
+   - Buka kembali halaman `/dashboard`, maka seharusnya kita akan di-redirect ke halaman `/login`
+
+Sampai di titik ini artinya kita sudah berhasil dalam mempelajari bagaimana cara melakukan proteksi navigasi di tampilan NextJS kita.
+
+Dan artinya, sampai di sini jugalah pembelajaran kita mengenai NextJS v15 ini.
+
+Sungguh panjang sekali bukan?
+
+:::caution
+Sebenarnya, masih banyak fitur NextJS yang belum digunakan di sini:
+- Metadata API untuk keperluan Search Engine Optimization
+- Penggunaan `<Image>` untuk optimasi gambar
+- Penggunaan `caching` dan strategi caching yang baik dan benar
+- Penggunaan `middleware` untuk keperluan lainnya (rate limiter, dll dkk)
+- Bahkan, penggunaan Client Component yang lebih kompleks (fetch dengan `cookies`, dst).
+:::
+
+:::danger
+Apakah ini artinya sudah selesai?
+
+Tentu saja `tydaque !`
+
+Inilah saatnya situ bikin portfolio / proyek sendiri berdasarkan apa yang sudah dipelajarin di sini.
+:::

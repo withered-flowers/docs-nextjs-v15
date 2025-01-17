@@ -1,0 +1,221 @@
+---
+title: JWT dengan jose
+---
+
+import { FileTree } from "@astrojs/starlight/components";
+
+### Bertaruh dengan jose
+
+Pada langkah ini, kita akan mencoba menggunakan `jose` di middleware NextJS kita.
+
+:::caution
+Pada langkah ini kita **TETAP** akan menggunakan package `jsonwebtoken` untuk membuat token JWT, karena tidak bermasalah.
+
+Yang bermasalah hanyalah ketika kita verify di middleware, kita akan verify dengan menggunakan `jose`.
+
+Hal ini juga mencerminkan cara ketika kita membuat proyek di dunia nyata:
+
+> _Instead of_ kita _complete rewrite_ kode kita, kita akan berusaha untuk `menambal` kode yang tidak berjalan.
+
+Sehingga tidak memengaruhi sistem yang sudah berjalan **SECARA KESELURUHAN**.
+:::
+
+:::tip
+Untuk dokumentasi tentang `jose`, bisa dilihat di [tautan ini yah](https://github.com/panva/jose/blob/HEAD/docs/jwt/verify/functions/jwtVerify.md)
+:::
+
+Langkah-langkahnya adalah sebagai berikut:
+
+1. Install `jose` dengan perintah `npm install jose`
+   - Tenang saja, ini sudah TypeScript ready, sehingga tidak memerlukan `@types/jose`.
+1. Modif file `jwt.ts` pada folder `src/utils/` (`src/utils/jwt.ts`) menjadi seperti berikut:
+
+   <FileTree>
+   - src/
+     - animations/
+     - app/
+       - ...
+       - api/
+          - users/
+            - route.ts
+       - dashboard/
+          - page.tsx
+       - login/
+          - page.tsx
+       - register/
+         - page.tsx
+     - components/
+       - ...
+       - DashboardSidebar.tsx
+       - FlashComponent.tsx
+       - FormRegister.tsx
+       - FormLogin.tsx
+     - db/
+     - services/
+       - login.ts
+       - register.ts
+     - utils/
+       - ...
+       - **jwt.ts**
+     - middleware.ts
+   </FileTree>
+
+   :::tip
+   Perhatikan comment dengan awalan `Step 8a.x - <Penjelasan>`
+   :::
+
+   ```ts
+   // File: jwt.ts
+   // ?? Import jwt dan JwtPayload dari library jsonwebtoken.
+   import jwt, { type JwtPayload } from "jsonwebtoken";
+
+   // ?? Step 8.1 - Import package `jose`
+   import * as jose from "jose";
+
+   // ?? Step 5.1 - Buat tipe data yang berfungsi sebagai payload dari JWT
+   export type MyJwtPayload = {
+     id: number;
+     email: string;
+   };
+
+   // ?? SECRET_KEY akan diambil dari environment variable JWT_SECRET. Jika tidak ada, maka kita akan menggunakan string "this-is-not-a-safe-key".
+   // ?? Kegunaan SECRET_KEY adalah sebagai kunci rahasia yang digunakan untuk mengenkripsi dan mendekripsi token.
+   const SECRET_KEY = process.env.JWT_SECRET || "this-is-not-a-safe-key";
+
+   // ?? Di sini kita menerima payload berupa object (JwtPayload) yang berisi data yang akan disimpan di dalam token.
+   export const createToken = (payload: JwtPayload) =>
+     jwt.sign(payload, SECRET_KEY);
+
+   // ?? Di sini kita menerima token berupa string yang berisi token yang akan dibaca.
+   export const readPayload = (token: string) => jwt.verify(token, SECRET_KEY);
+
+   // ?? Step 8.2 - Buat function untuk mem-verifikasi token dengan jose
+   // ?? Ingat bahwa verifikasi token = baca payload
+   // ?? Notes:
+   // ?? - Function ini akan menggunakan fungsi jwtVerify dari jose
+   // ?? - Function jwtVerify ini bisa menggunakan generic type sebagai kembalian dari payload
+   // ?? - Kita akan menggunakan generic type untuk memastikan bahwa payload yang kita terima adalah MyJwtPayload
+   // ?? - Lihat si <T> di bawah
+   export const readPayloadJose = async <T>(token: string) => {
+     // ?? Karena di sini kita menggunakan jose, secret key yang ada harus di encode dulu
+     const encodedKey = new TextEncoder().encode(SECRET_KEY);
+
+     // ?? Kita akan menggunakan fungsi jwtVerify dari jose
+     const verifyResult = await jose.jwtVerify<T>(token, encodedKey);
+
+     // ?? Di sini kita akan mengembalikan payload dari hasil verifikasi
+     return verifyResult.payload;
+   };
+   ```
+
+1. Habis ini, kita tinggal memodif `middleware.ts` pada folder src (`src/middleware.ts`), untuk menggunakan fungsi `readPayloadJose` untuk menggantikan `readPayload`
+
+   <FileTree>
+   - src/
+     - animations/
+     - app/
+       - ...
+       - api/
+          - users/
+            - route.ts
+       - dashboard/
+          - page.tsx
+       - login/
+          - page.tsx
+       - register/
+         - page.tsx
+     - components/
+       - ...
+       - DashboardSidebar.tsx
+       - FlashComponent.tsx
+       - FormRegister.tsx
+       - FormLogin.tsx
+     - db/
+     - services/
+       - login.ts
+       - register.ts
+     - utils/
+       - ...
+       - jwt.ts
+     - **middleware.ts**
+   </FileTree>
+
+   :::tip
+   Perhatikan comment dengan awalan `Step 8b.x - <Penjelasan>`
+   :::
+
+   ```ts
+   // File: middleware.ts
+   import { cookies } from "next/headers";
+   import {
+     type MiddlewareConfig,
+     type NextRequest,
+     NextResponse,
+   } from "next/server";
+   import type { MyResponse } from "./app/api/types";
+
+   // ?? Step 8b.1 - Import readPayloadJose dari utils/jwt yang sudah kita buat
+   import {
+     type MyJwtPayload,
+     readPayload,
+     readPayloadJose,
+   } from "./utils/jwt";
+
+   export const middleware = async (req: NextRequest) => {
+     console.log("Pathname:", req.nextUrl.pathname);
+
+     if (req.nextUrl.pathname === "/api/users" && req.method === "POST") {
+       return NextResponse.next();
+     }
+
+     const cookieStore = await cookies();
+     const token = cookieStore.get("token");
+
+     if (!token) {
+       return NextResponse.json<MyResponse<never>>({
+         statusCode: 401,
+         error: "Unauthorized to access this resource",
+       });
+     }
+
+     // ?? Step 8b.2 - Comment line di bawh ini,
+     // karena kita akan membuat yang baru dengan readPayloadJose
+     // const payload = readPayload(token.value) as MyJwtPayload;
+
+     // ?? Step 8b.3 - Kita akan menggunakan readPayloadJose
+     const payload = await readPayloadJose<MyJwtPayload>(token.value);
+
+     const newHeaders = new Headers(req.headers);
+
+     newHeaders.set("x-user-id", payload.id.toString());
+     newHeaders.set("x-user-email", payload.email);
+     newHeaders.set("x-additional-data", "Hello, World!");
+
+     return NextResponse.next({
+       headers: newHeaders,
+     });
+   };
+
+   export const config = {
+     matcher: ["/api/:path*"],
+   } satisfies MiddlewareConfig;
+   ```
+
+1. Mari kita buktikan dengan:
+
+- Buka browser dan akses `http://localhost:3000/login`
+- Login dengan email `developer@mail.com` dan password `123456`
+
+Apabila semuanya berhasil, maka aplikasi akan dialihkan ke halaman `http://localhost:3000/dashboard` dan data dari user akan berhasil muncul, serta di console server akan muncul data headers yang kita miliki.
+
+:::tip
+🎉 Selamat, situ sudah berhasil implementasi middleware di NextJS dengan baik ! 🎉
+:::
+
+Tapi sedihnya, ini belum selesai...
+
+Jadi masih ada lagi yang harus dilakukan, yaitu:
+
+- Membatasi halaman tertentu (`Navigation Guard`) hanya bisa diakses oleh user yang sudah login atau yang belum login:
+  - User yang sudah melakukan login, tidak bisa masuk ke halaman `/login` dan `/register`
+  - User yang belum melakukan login, tidak bisa masuk ke halaman `/dashboard` dan turunannya

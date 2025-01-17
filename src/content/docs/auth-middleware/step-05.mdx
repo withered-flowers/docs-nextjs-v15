@@ -1,0 +1,253 @@
+---
+title: Simpan Data Login
+---
+
+import { FileTree } from "@astrojs/starlight/components";
+
+### Simpan-nya Dimana?
+
+Nah di sini kita akan menyimpan data login (token) yang sudah digenerate oleh server.
+
+Pertanyaannya:
+
+> **Simpan di mana nih?**
+
+Ada beberapa opsi yang bisa kita pilih nih, diantaranya:
+
+- Local Storage, cara yang sangat umum digunakan pada saat belajar menggunakan JSON Web Token.
+
+  :::danger
+  Namun merupakan cara yang tidak disarankan, karena tergolong kurang aman
+  :::
+
+- Web Worker / Worker Thread, Cara yang aman dan disarankan dalam dokumentasi JSON Web Token.
+
+  :::caution
+  Namun memerlukan pengetahuan lebih dalam tentang JavaScript, dan Web Technology
+  :::
+
+- Cookies, cara yang cukup disarankan ketika kita menggunakan NextJS
+
+  :::note
+  Tergolong cukup mudah dan aman, apabila di-set dengan baik !
+  :::
+
+- Dan masih ada cara-cara lainnya lagi, _mungkin situ mau nambahin di dokumentasi ini?_ 😊
+
+Nah berdasarkan pilihan yang ada di atas ini, kita akan menggunakan `cookies` dalam menyimpan data login pada aplikasi ini yah.
+
+Untuk itu langkah-langkahnya adalah sebagai berikut:
+
+1. Modifikasi file `src/utils/jwt.ts` dan tambahkan tipe data JWT Payload yang akan dibuat.
+
+   <FileTree>
+   - src/
+     - animations/
+     - app/
+       - ...
+       - login/
+          - page.tsx
+       - register/
+         - page.tsx
+     - components/
+       - ...
+       - FlashComponent.tsx
+       - FormRegister.tsx
+       - FormLogin.tsx
+     - db/
+     - services/
+       - login.ts
+       - register.ts
+     - utils/
+       - ...
+       - **jwt.ts**
+   </FileTree>
+
+   :::tip
+   Perhatikan comment dengan awalan `Step 5.x - <Penjelasan>`
+   :::
+
+   ```ts
+   // File: jwt.ts
+   import jwt, { type JwtPayload } from "jsonwebtoken";
+
+   // ?? Step 5.1 - Buat tipe data yang berfungsi sebagai payload dari JWT
+   export type MyJwtPayload = {
+     id: number;
+     email: string;
+   };
+
+   const SECRET_KEY = process.env.JWT_SECRET || "this-is-not-a-safe-key";
+
+   export const createToken = (payload: JwtPayload) =>
+     jwt.sign(payload, SECRET_KEY);
+
+   export const readPayload = (token: string) => jwt.verify(token, SECRET_KEY);
+   ```
+
+1. Buka kembali file `src/services/login.ts` dan modifikasi file jadi begini:
+
+   <FileTree>
+   - src/
+     - animations/
+     - app/
+       - ...
+       - login/
+          - page.tsx
+       - register/
+         - page.tsx
+     - components/
+       - ...
+       - FlashComponent.tsx
+       - FormRegister.tsx
+       - FormLogin.tsx
+     - db/
+     - services/
+       - **login.ts**
+       - register.ts
+     - utils/
+       - ...
+       - jwt.ts
+   </FileTree>
+
+   :::tip
+   Perhatikan comment dengan awalan `Step 5.x - <Penjelasan>`
+   :::
+
+   ```ts
+   // File: login.ts
+   "use server";
+
+   import { getUserByEmail } from "@/db/models/user";
+   import { verifyHash } from "@/utils/hash";
+   import { redirect } from "next/navigation";
+   import { z } from "zod";
+
+   // ?? Step 5.2 - Mengimport yang dibutuhkan dari JWT
+   import { type MyJwtPayload, createToken } from "@/utils/jwt";
+   // ?? Step 5.3 - Mengimport cookies yang sudah disiapkan oleh NextJS
+   import { cookies } from "next/headers";
+
+   type ActionFormData = {
+     email: string;
+     password: string;
+   };
+
+   export type ActionResponse = {
+     success: boolean;
+     message: string;
+     error?: {
+       [K in keyof ActionFormData]?: string[];
+     };
+     input?: ActionFormData;
+   };
+
+   const LoginUserSchema = z.object({
+     email: z.string().email({
+       message: "Email tidak valid",
+     }),
+     password: z.string().min(6, {
+       message: "Password minimal 6 karakter",
+     }),
+   });
+
+   export const serverActionLoginHandler = async (
+     _stateSebelumnya: ActionResponse | null,
+     payload: FormData
+   ): Promise<ActionResponse> => {
+     const rawData: ActionFormData = {
+       email: payload.get("email") as string,
+       password: payload.get("password") as string,
+     };
+
+     // ?? Step 5.4 - Menggunakan cookies
+     // ?? Sejak NextJS v15, cookies ini sudah bersifat async, sehingga kita harus menggunakan await
+     const cookieStore = await cookies();
+
+     const parsedData = LoginUserSchema.safeParse(rawData);
+
+     if (!parsedData.success) {
+       return {
+         success: false,
+         message: "Please check your input",
+         error: parsedData.error.flatten().fieldErrors,
+         input: rawData,
+       };
+     }
+
+     const foundUser = await getUserByEmail(parsedData.data.email);
+
+     if (
+       !foundUser ||
+       !verifyHash(parsedData.data.password, foundUser.password)
+     ) {
+       return {
+         success: false,
+         message: "Invalid credentials",
+       };
+     }
+
+     // ?? Step 5.5 - Membuat payload yang akan disiapkan untuk JWT
+     const jwtPayload: MyJwtPayload = {
+       id: foundUser.id,
+       email: foundUser.email,
+     };
+
+     // ?? Step 5.6 - Membuat token berdasarkan payload yang sudah disiapkan
+     const token = createToken(jwtPayload);
+
+     // ?? Step 5.7 - Menyimpan token ke dalam cookies
+     // ?? Kita akan menggunakan cookieStore yang sudah disiapkan oleh NextJS
+     // ?? Kita akan menyimpan token ke dalam cookie dengan nama "token"
+     cookieStore.set("token", token, {
+       // ?? Kita akan mengatur cookie ini agar lebih aman (tidak dapat diakses oleh JavaScript), untuk menhindari XSS
+       httpOnly: true,
+       // ?? Kita akan mengatur cookie ini agar hanya bisa diakses oleh HTTPS
+       // !! Di sini kita akan menggunakan logic untuk mematikan secure bila tidak dalam production
+       secure: process.env.NODE_ENV === "production",
+       // ?? Kita akan mengatur cookie ini akan expired dalam 1 hari
+       expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 1),
+       // ?? Kita akan mengatur cookie ini agar hanya bisa diakses oleh domain yang sama
+       sameSite: "strict",
+     });
+
+     redirect("/dashboard");
+   };
+   ```
+
+   :::note
+   TL;DR
+
+   Modifikasi file di atas adalah:
+   - Buat `payload` JWT
+   - Buat `token` berdasarkan `payload` tersebut
+   - Simpan `token` ke dalam `cookies`
+   :::
+
+1. Selanjutnya kita akan mencoba untuk melakukan login ke dalam aplikasi kita.
+
+   - Buka browser dan akses `http://localhost:3000/login`
+   - Masukkan email dan password yang sudah terdaftar (`developer@mail.com` dan `123456`)
+   - Klik tombol `Login`
+
+   Jika berhasil, maka kita akan di-redirect ke halaman `/dashboard`
+
+1. Untuk membuktikan apakah cookie sudah tersimpan atau tidak, kita bisa menggunakan Developer Tools di browser.
+
+   - Buka Developer Tools
+   - Pilih tab `Application`
+   - Pilih menu `Cookies` di sisi kiri
+   - Pilih domain `http://localhost:3000`
+   - Cari cookie dengan nama `token`
+
+   Jika berhasil, maka kita akan melihat cookie dengan nama `token` yang sudah tersimpan di dalam browser.
+
+Yay ! sampai di sini artinya kita sudah berhasil mengimplementasikan login di aplikasi NextJS kita.
+
+> **_Cukup panjang ya?_**
+
+Tapi tenang saja, _Perjalanan ini baru dimulai ~_
+
+Udah implementasi login masa ga implementasi logout? 
+
+**Ga seru donk !** 😅
