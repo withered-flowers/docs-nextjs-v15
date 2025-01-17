@@ -17,6 +17,10 @@ export default defineConfig({
 					label: "Introduction",
 					items: [
 						{
+							label: "Intro",
+							slug: "intro/intro",
+						},
+						{
 							label: "Step 0 - Kenalan dengan NextJS",
 							slug: "intro/step-00",
 						},
@@ -166,7 +170,7 @@ export default defineConfig({
 					],
 				},
 				{
-					label: "Authentication & Middleware (WIP)",
+					label: "Authentication & Middleware",
 					items: [
 						{
 							label: "Step 0 - Inisialisasi Proyek",
@@ -205,8 +209,20 @@ export default defineConfig({
 							slug: "auth-middleware/step-08",
 						},
 						{
-							label: "Step 8 - In Depth - Middleware",
+							label: "In Depth - Middleware",
 							slug: "auth-middleware/step-09",
+						},
+						{
+							label: "Step 8 - JWT dengan jose",
+							slug: "auth-middleware/step-10",
+						},
+						{
+							label: "Step 9 - Proteksi si Frontend",
+							slug: "auth-middleware/step-11",
+						},
+						{
+							label: "Epilogue",
+							slug: "auth-middleware/epilogue",
 						},
 					],
 				},
