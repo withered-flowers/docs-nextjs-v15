@@ -11,11 +11,14 @@
   },
   "dependencies": {
     "@astrojs/starlight": "^0.30.3",
+    "@astrojs/starlight-tailwind": "^3.0.0",
+    "@astrojs/tailwind": "^5.1.4",
     "@types/canvas-confetti": "^1.9.0",
     "astro": "^5.0.2",
     "astro-integration-lottie": "^0.3.2",
     "canvas-confetti": "^1.9.3",
     "lottie-web": "^5.12.2",
-    "sharp": "^0.32.5"
+    "sharp": "^0.32.5",
+    "tailwindcss": "^3.4.17"
   }
 }
